@@ -1,11 +1,11 @@
-name: Continuous Integration
+name: Continuous Delivery
 
 on:
   workflow_call:
     inputs:
-      sonarAnalysisEnabled:
+      release_branches:
         required: true
-        type: boolean
+        type: string
     secrets:
       repoUser:
         required: true
@@ -34,9 +34,31 @@ jobs:
       # when running from the command line.
       # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
       MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+      JSC_VERSION_PREFIX: 2021.0-pre.
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Bump version and create tag
+        id: semanticversion
+        uses: hennejg/github-tag-action@v4.2.4
+        with:
+          release_branches: ¼{{ inputs.release_branches }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: ${{ env.JSC_VERSION_PREFIX }}
+
+      - name: Verify and print new build number
+        run: |
+          if echo '${{ steps.semanticversion.outputs.new_tag }}' |grep -Eq '^${{ env.JSC_VERSION_PREFIX }}[0-9]+[.][0-9]+[.][0-9]+$'; then
+            echo Tag '${{ steps.semanticversion.outputs.new_tag }}', New version '${{ steps.semanticversion.outputs.new_version }}', Changelog '${{ steps.semanticversion.outputs.changelog }}'
+          else
+            echo 'unexpected tag format - aborting'
+            exit -1
+          fi
+
+      - name: Set up Env
+        run: |
+          echo "NEW_VERSION=${{ env.JSC_VERSION_PREFIX }}${{ steps.semanticversion.outputs.new_version }}" >> $GITHUB_ENV
 
       - name: Set up JDK
         uses: actions/setup-java@v2
@@ -57,19 +79,39 @@ jobs:
           mkdir -p ~/.m2
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
 
+      - name: Set version
+        id: version
+        run: |
+          echo Releasing as ${{ env.NEW_VERSION }}
+          mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=${{ env.NEW_VERSION }}
+
       - name: Perform build
-        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
+        run: mvn $MAVEN_CLI_OPTS package -Dmaven.test.failure.ignore=true -Djib.skip=true
 
       - name: Publish Test Report
+        id: test-report
         uses: scacap/action-surefire-report@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_test_failures: true
-          fail_if_no_tests: true
 
-      - name: Perform sonar analysis
-        if: inputs.sonarAnalysisEnabled == 'true'
-        run: mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true
+      - name: Deploy images
+        env:
+          REGISTRY_URL: ${{ secrets.registryURL }}}
+        run: >
+          mvn $MAVEN_CLI_OPTS package
+          -Dmaven.test.skip=true -Dmaven.install.skip=true
+          -Dgit.commit.id=${{ github.sha }}
+          -DenableDocker -Ddocker.registry.from=${REGISTRY_URL} -Ddocker.registry.to=${REGISTRY_URL}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          release_name: Release ${{ env.NEW_VERSION }}
 
       - name: Notify slack
         uses: hennejg/slack-build-notifier@v1.1
@@ -77,6 +119,7 @@ jobs:
           username: GitHub
           icon_emoji: octocat
           channel: ci_js
+          text: Released new version `${{ env.NEW_VERSION }}` of *${{ github.repository }}*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
