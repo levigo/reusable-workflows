@@ -68,7 +68,7 @@ jobs:
           fail_if_no_tests: true
 
       - name: Perform sonar analysis
-        if: inputs.sonarAnalysisEnabled == 'true'
+        if: inputs.sonarAnalysisEnabled
         run: mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true
 
       - name: Notify slack
