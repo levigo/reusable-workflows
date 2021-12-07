@@ -84,7 +84,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
         if: always()
 
-      - uses: toko-bifrost/ms-teams-deploy-card@v3
+      - uses: toko-bifrost/ms-teams-deploy-card@master
         if: always()
         with:
           github-token: ${{ github.token }}
