@@ -21,6 +21,8 @@ on:
         required: true
       slackWebhookURL:
         required: true
+      teamsWebhookURL:
+        required: true
 
 jobs:
   build:
@@ -81,3 +83,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
         if: always()
+
+      - uses: toko-bifrost/ms-teams-deploy-card@v3
+        if: always()
+        with:
+          github-token: ${{ github.token }}
+          webhook-uri: ${{ secrets.teamsWebhookURL }}
