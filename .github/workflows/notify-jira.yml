@@ -1,0 +1,81 @@
+name: Notify JIRA
+
+on:
+  workflow_call:
+    inputs:
+      jiraProjectKey:
+        required: true
+        type: string
+      mainBranch:
+        required: true
+        type: string
+      releaseVersion:
+        required: true
+        type: string
+      dryrun:
+        required: true
+        type: boolean
+      archived:
+        required: true
+        type: boolean
+    secrets:
+      jiraUser:
+        required: true
+      jiraPassword:
+        required: true
+      jiraURL:
+        required: true
+      repoUser:
+        required: true
+      repoPassword:
+        required: true
+      registryURL:
+        required: true
+      token:
+        required: true
+
+
+jobs:
+  notify-jira:
+    needs: build
+    runs-on: ubuntu-20.04
+    timeout-minutes: 7
+    continue-on-error: true
+
+    steps:
+      - name: show workdir
+        run: ls -lahn
+      - uses: actions/checkout@v2
+      - name: show workdir
+        run: ls -lahn
+
+      - uses: actions/checkout@v2
+        with:
+          repository: levigo/action-jira
+          ref: refs/tags/v8.2
+          path: action-jira
+          token: ${{ secrets.token }}
+
+      - name: get jcdc image
+        env:
+          REGISTRY_USERID: ${{ secrets.repoUser }}
+          REGISTRY_CREDENTIALS: ${{ secrets.repoPassword }}
+          REGISTRY_URL: ${{ secrets.registryURL }}
+        run: |
+          docker login ${REGISTRY_URL} --username ${REGISTRY_USERID} --password ${REGISTRY_CREDENTIALS}
+          docker pull ${REGISTRY_URL}/jira-cd-client:1.2.2
+
+      - name: notify JIRA
+        uses: ./action-jira
+        with:
+          runnable: "ReleaseRunnable"
+          jira-base-url: "${{ secrets.jiraURL }}"
+          jira-user: "${{ secrets.jiraUser }}"
+          jira-password: "${{ secrets.jiraPassword }}"
+          jira-projet-key: "${{ inputs.jiraProjectKey }}"
+          release-version: "${{ inputs.releaseVersion }}"
+          git-commitHash: "${{ github.sha }}"
+          git-repositoryPath: "./.git"
+          dryrun: "${{ inputs.dryrun }}"
+          archived: "${{ inputs.archived }}"
+          main-branch: "${{ inputs.mainBranch }}"
