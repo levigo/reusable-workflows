@@ -37,7 +37,6 @@ on:
 
 jobs:
   notify-jira:
-    needs: build
     runs-on: ubuntu-20.04
     timeout-minutes: 7
     continue-on-error: true
