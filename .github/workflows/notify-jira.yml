@@ -51,6 +51,8 @@ jobs:
           ls -lahn
           ls -lahn /home/runner/work/worker-analyzer/worker-analyzer || true
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: show workdir
         run: |
           pwd
