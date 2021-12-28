@@ -7,17 +7,20 @@ on:
         required: true
         type: string
       mainBranch:
-        required: true
+        required: false
         type: string
+        default: 'origin/master'
       releaseVersion:
         required: true
         type: string
       dryrun:
         required: true
         type: boolean
+        default: false
       archived:
         required: true
         type: boolean
+        default: false
     secrets:
       jiraUser:
         required: true
@@ -38,15 +41,21 @@ on:
 jobs:
   notify-jira:
     runs-on: ubuntu-20.04
-    timeout-minutes: 7
+    timeout-minutes: 10
     continue-on-error: true
 
     steps:
       - name: show workdir
-        run: ls -lahn
+        run: |
+          pwd
+          ls -lahn
+          ls -lahn /home/runner/work/worker-analyzer/worker-analyzer || true
       - uses: actions/checkout@v2
       - name: show workdir
-        run: ls -lahn
+        run: |
+          pwd
+          ls -lahn
+          ls -lahn /home/runner/work/worker-analyzer/worker-analyzer || true
 
       - uses: actions/checkout@v2
         with:
