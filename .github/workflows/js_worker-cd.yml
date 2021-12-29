@@ -21,11 +21,13 @@ on:
       registryURL:
         required: true
       sonarToken:
-        required: true
+        required: false
       sonarURL:
-        required: true
+        required: false
       slackWebhookURL:
-        required: true
+        required: false
+      teamsWebhookURL:
+        required: false
 
 jobs:
   build:
@@ -126,14 +128,12 @@ jobs:
           tag_name: ${{ env.NEW_VERSION }}
           release_name: Release ${{ env.NEW_VERSION }}
 
-      - name: Notify slack
-        uses: hennejg/slack-build-notifier@v1.1
-        with:
-          username: GitHub
-          icon_emoji: octocat
-          channel: ci_js
-          text: Released new version `${{ env.NEW_VERSION }}` of *${{ github.repository }}*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
-        if: always()
+  call-workflow-notify-developers:
+    needs: build
+    uses: levigo/reusable-workflows/.github/workflows/notify-developers.yml@4a873b6e2cffd8a56537027d06bec8bfc3823a60
+    secrets:
+      slackWebhookURL: ${{ secrets.slackWebhookURL }}
+      teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
+    inputs:
+      slackChannel: 'ci_js'
+    if: always()
