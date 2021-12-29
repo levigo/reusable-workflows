@@ -64,18 +64,18 @@ jobs:
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
           echo ${{ inputs.skipTests }}
 
-      ## Build and Test
-      - name: Perform build
-        if: !inputs.skipTests
-        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
-
-      - name: Publish Test Report
-        if: !inputs.skipTests
-        uses: scacap/action-surefire-report@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_test_failures: true
-          fail_if_no_tests: true
+#      ## Build and Test
+#      - name: Perform build
+#        if: !inputs.skipTests
+#        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
+#
+#      - name: Publish Test Report
+#        if: !inputs.skipTests
+#        uses: scacap/action-surefire-report@v1
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          fail_on_test_failures: true
+#          fail_if_no_tests: true
 
       ## Build without running Tests
       - name: Perform build
