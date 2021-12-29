@@ -6,6 +6,10 @@ on:
       sonarAnalysisEnabled:
         required: true
         type: boolean
+      skipTests:
+        required: false
+        type: boolean
+        default: false
     secrets:
       repoUser:
         required: true
@@ -59,16 +63,25 @@ jobs:
           mkdir -p ~/.m2
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
 
+      ## Build and Test
       - name: Perform build
+        if: ! ${{ inputs.skipTests }}
         run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
 
       - name: Publish Test Report
+        if: ! ${{ inputs.skipTests }}
         uses: scacap/action-surefire-report@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_test_failures: true
           fail_if_no_tests: true
 
+      ## Build without running Tests
+      - name: Perform build
+        if: ${{ inputs.skipTests }}
+        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
+
+      ## Static code analysis with sonarqube
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
         run: mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true

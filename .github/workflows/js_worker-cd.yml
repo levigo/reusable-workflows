@@ -4,8 +4,13 @@ on:
   workflow_call:
     inputs:
       release_branches:
-        required: true
+        required: false
         type: string
+        default: 'main'
+      skipTests:
+        required: false
+        type: boolean
+        default: false
     secrets:
       repoUser:
         required: true
@@ -85,15 +90,23 @@ jobs:
           echo Releasing as ${{ env.NEW_VERSION }}
           mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=${{ env.NEW_VERSION }}
 
+      ## Build and Test
       - name: Perform build
+        if: ! ${{ inputs.skipTests }}
         run: mvn $MAVEN_CLI_OPTS package -Dmaven.test.failure.ignore=true -Djib.skip=true
 
       - name: Publish Test Report
-        id: test-report
+        if: ! ${{ inputs.skipTests }}
         uses: scacap/action-surefire-report@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_test_failures: true
+          fail_if_no_tests: true
+
+      ## Build without running Tests
+      - name: Perform build
+        if: ${{ inputs.skipTests }}
+        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
 
       - name: Deploy images
         env:
