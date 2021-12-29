@@ -1,0 +1,45 @@
+name: Notify developers
+
+on:
+  workflow_call:
+    secrets:
+      slackWebhookURL:
+        required: false
+      slackChannel:
+        required: false
+        default: ci_qm_test
+      teamsWebhookURL:
+        required: false
+
+
+jobs:
+  notify-developers:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+    continue-on-error: true
+
+    steps:
+      - name: Notify slack
+        uses: hennejg/slack-build-notifier@v1.1
+        if: ${{ inputs.slackWebhookURL }}
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.slackChannel }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
+
+      - name: Notify teams
+        uses: toko-bifrost/ms-teams-deploy-card@master
+        if: ${{ inputs.teamsWebhookURL }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          webhook-uri: ${{ secrets.teamsWebhookURL }}
+          show-on-start: false
+          show-on-exit: true
+          show-on-failure: true
+          card-layout-exit: complete
+          timezone: "Europe/Berlin"
+          include-files: false
+
