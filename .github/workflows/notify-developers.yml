@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Notify slack
         uses: hennejg/slack-build-notifier@v1.1
-        if: ${{ inputs.slackWebhookURL }}
+        if: ${{ secrets.slackWebhookURL }}
         with:
           username: GitHub
           icon_emoji: octocat
@@ -34,7 +34,7 @@ jobs:
 
       - name: Notify teams
         uses: toko-bifrost/ms-teams-deploy-card@master
-        if: ${{ inputs.teamsWebhookURL }}
+        if: ${{ secrets.teamsWebhookURL }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           webhook-uri: ${{ secrets.teamsWebhookURL }}
