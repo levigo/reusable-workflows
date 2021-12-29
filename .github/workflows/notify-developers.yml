@@ -21,9 +21,14 @@ jobs:
     continue-on-error: true
 
     steps:
+      - name: Set up Env
+        run: |
+          echo "NOTIFY_SLACK=${{ secrets.slackWebhookURL }}" >> $GITHUB_ENV
+          echo "NOTIFY_TEAMS=${{ secrets.teamsWebhookURL }}" >> $GITHUB_ENV
+
       - name: Notify slack
         uses: hennejg/slack-build-notifier@v1.1
-        if: ${{ secrets.slackWebhookURL }}
+        if: ${{ env.NOTIFY_SLACK }}
         with:
           username: GitHub
           icon_emoji: octocat
@@ -34,7 +39,7 @@ jobs:
 
       - name: Notify teams
         uses: toko-bifrost/ms-teams-deploy-card@master
-        if: ${{ secrets.teamsWebhookURL }}
+        if: ${{ env.NOTIFY_TEAMS }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           webhook-uri: ${{ secrets.teamsWebhookURL }}
