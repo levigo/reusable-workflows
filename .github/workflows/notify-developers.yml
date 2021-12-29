@@ -2,12 +2,14 @@ name: Notify developers
 
 on:
   workflow_call:
+    inputs:
+      slackChannel:
+        required: false
+        type: string
+        default: 'ci_qm_test'
     secrets:
       slackWebhookURL:
         required: false
-      slackChannel:
-        required: false
-        default: ci_qm_test
       teamsWebhookURL:
         required: false
 
