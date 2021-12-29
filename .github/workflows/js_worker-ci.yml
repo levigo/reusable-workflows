@@ -86,12 +86,31 @@ jobs:
         if: inputs.sonarAnalysisEnabled
         run: mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true
 
-  call-workflow-notify-developers:
-    needs: build
-    uses: levigo/reusable-workflows/.github/workflows/notify-developers.yml@4a873b6e2cffd8a56537027d06bec8bfc3823a60
-    secrets:
-      slackWebhookURL: ${{ secrets.slackWebhookURL }}
-      teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
-    inputs:
-      slackChannel: 'ci_js'
-    if: always()
+      - name: Set up Env
+        run: |
+          echo "NOTIFY_SLACK=${{ secrets.slackWebhookURL }}" >> $GITHUB_ENV
+          echo "NOTIFY_TEAMS=${{ secrets.teamsWebhookURL }}" >> $GITHUB_ENV
+
+      - name: Notify slack
+        uses: hennejg/slack-build-notifier@v1.1
+        if: ${{ env.NOTIFY_SLACK }}
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.slackChannel }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
+
+      - name: Notify teams
+        uses: toko-bifrost/ms-teams-deploy-card@master
+        if: ${{ env.NOTIFY_TEAMS }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          webhook-uri: ${{ secrets.teamsWebhookURL }}
+          show-on-start: false
+          show-on-exit: true
+          show-on-failure: true
+          card-layout-exit: complete
+          timezone: "Europe/Berlin"
+          include-files: false
