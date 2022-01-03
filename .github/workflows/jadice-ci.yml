@@ -90,7 +90,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: levigo/github-actions
-          ref: 69c1f1bab42ede53ce34c598afe11921a8d1f4c4
+          ref: 2bbea5e2cf122273b7c6d2657092aab9fb767319
           path: actions
           token: ${{ secrets.token }}
 
@@ -114,6 +114,7 @@ jobs:
           mavenCLIOptions: ${{ matrix.jdk.config }} ${{ env.MAVEN_CLI_OPTS }}
           xvfb: ${{ inputs.xvfb }}
           skipTests: ${{ inputs.skipTests }}
+          java-version: ${{ matrix.jdk.version }}
 
       - uses: ./actions/code-analysis
         with:
