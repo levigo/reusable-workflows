@@ -48,6 +48,8 @@ on:
         type: boolean
         default: false
     secrets:
+      token:
+        required: true
       repoUser:
         required: true
       repoPassword:
