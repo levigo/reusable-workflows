@@ -12,15 +12,17 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 5
 
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(inputs.matrix) }}
+#    strategy:
+#      fail-fast: false
+#      matrix: ${{ fromJSON(inputs.matrix) }}
 
     steps:
-      - name:
-        env:
-          MATRIX_JDK: ${{ matrix.jdk }}
-          MATRIX_CONFIG: ${{ matrix.config }}
-        run: |
-          echo "jdk=$MATRIX_JDK"
-          echo "config=$MATRIX_CONFIG"
+#      - name:
+#        env:
+#          MATRIX_JDK: ${{ matrix.jdk }}
+#          MATRIX_CONFIG: ${{ matrix.config }}
+#        run: |
+#          echo "jdk=$MATRIX_JDK"
+#          echo "config=$MATRIX_CONFIG"
+
+      - run: echo ${{ fromJSON(inputs.matrix) }}
