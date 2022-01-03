@@ -1,0 +1,21 @@
+name: Test Matrix
+
+on:
+  workflow_call:
+    inputs:
+      matrix:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJSON(inputs.matrix)}}
+
+    steps:
+      - run: |
+          echo ${{ matrix.jdk }}
