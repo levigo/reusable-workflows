@@ -25,6 +25,7 @@ on:
       java-distribution:
         description: 'The Java distribution to use. (defaults to eclipse "temurin")'
         required: false
+        type: string
         default: 'temurin'
       maven-repo:
         description: 'The target maven repository - either n2 or n3 (defaults to n3)'
