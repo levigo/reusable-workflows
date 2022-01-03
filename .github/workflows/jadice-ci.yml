@@ -1,0 +1,129 @@
+name: Continuous Integration
+
+on:
+  workflow_call:
+    inputs:
+      sonarAnalysisEnabled:
+        required: true
+        type: boolean
+      skipTests:
+        required: false
+        type: boolean
+        default: false
+      slackChannel:
+        required: false
+        type: string
+        default: 'ci_qm_test'
+      matrix:
+        required: false
+        type: string
+        default: '{"jdk":[{"version": 11, "config": ""}]}'
+      xvfb:
+        required: false
+        type: boolean
+        default: false
+      java-distribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        default: 'temurin'
+      maven-repo:
+        description: 'The target maven repository - either n2 or n3 (defaults to n3)'
+        required: false
+        type: string
+        default: 'n3'
+      maven-cache:
+        description: 'Cache the local maven repository between builds.'
+        required: false
+        type: boolean
+        default: true
+      maven-cache-exclusion:
+        description: 'Cache the local maven repository between builds.'
+        required: false
+        type: string
+        default: ''
+      maven-archive:
+        description: 'In case of a cache-miss, download an archived local-maven-repo'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      repoUser:
+        required: true
+      repoPassword:
+        required: true
+      repoURL:
+        required: true
+      registryURL:
+        required: true
+      sonarToken:
+        required: false
+      sonarURL:
+        required: false
+      slackWebhookURL:
+        required: false
+      teamsWebhookURL:
+        required: false
+
+env:
+  # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
+  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+  # when running from the command line.
+  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 25
+
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJSON(inputs.matrix)}}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v2
+        with:
+          repository: levigo/github-actions
+          ref: refs/tags/v0.0.1
+          path: actions
+          token: ${{ secrets.token }}
+
+      - uses: ./actions/setup-maven-java
+        with:
+          java-version: ${{ matrix.jdk.version }}
+          java-distribution: ${{ inputs.java-distribution }}
+          maven-repo: ${{ inputs.maven-repo }}
+          maven-cache: ${{ inputs.maven-cache }}
+          maven-cache-exclusion: ${{ inputs.maven-cache-exclusion }}
+          maven-archive: ${{ inputs.maven-cache }}
+          repoUser: ${{ secrets.repoUser }}
+          repoPassword: ${{ secrets.repoPassword }}
+          repoURL: ${{ secrets.repoURL }}
+          registryURL: ${{ secrets.registryURL }}
+          sonarToken: ${{ secrets.sonarToken }}
+          sonarURL: ${{ secrets.sonarURL }}
+
+      - uses: ./actions/maven-build
+        with:
+          mavenCLIOptions: ${{ matrix.jdk.config }} ${{ env.MAVEN_CLI_OPTS }}
+          xvfb: ${{ inputs.xvfb }}
+          skipTests: ${{ inputs.skipTests }}
+
+      - uses: ./actions/code-analysis
+        with:
+          sonarEnabled: ${{ inputs.sonarAnalysisEnabled }}
+          sonarToken: ${{ secrets.sonarToken }}
+          sonarURL: ${{ secrets.sonarURL }}
+
+      - uses: ./actions/notify-developers
+        with:
+          teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
+          slackWebhookURL: ${{ secrets.slackWebhookURL }}
+          slackChannel: ${{ inputs.slackChannel }}
+        if: always()
