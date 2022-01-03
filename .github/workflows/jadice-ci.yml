@@ -66,6 +66,10 @@ on:
         required: false
       teamsWebhookURL:
         required: false
+      repoReleaseUser:
+        required: false
+      repoReleasePassword:
+        required: false
 
 env:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -93,7 +97,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: levigo/github-actions
-          ref: 2bbea5e2cf122273b7c6d2657092aab9fb767319
+          ref: fb0cb4b39264d710dea7d4e50427228d836c6e99
           path: actions
           token: ${{ secrets.token }}
 
@@ -111,6 +115,9 @@ jobs:
           registryURL: ${{ secrets.registryURL }}
           sonarToken: ${{ secrets.sonarToken }}
           sonarURL: ${{ secrets.sonarURL }}
+          repoReleaseUser: ${{ secrets.repoReleaseUser }}
+          repoReleasePassword: ${{ secrets.repoReleasePassword }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./actions/maven-build
         with:
@@ -118,6 +125,7 @@ jobs:
           xvfb: ${{ inputs.xvfb }}
           skipTests: ${{ inputs.skipTests }}
           java-version: ${{ matrix.jdk.version }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./actions/code-analysis
         with:
@@ -130,4 +138,5 @@ jobs:
           teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
           slackWebhookURL: ${{ secrets.slackWebhookURL }}
           slackChannel: ${{ inputs.slackChannel }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
         if: always()
