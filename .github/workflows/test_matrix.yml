@@ -19,12 +19,8 @@ jobs:
     steps:
       - name:
         env:
-          MATRIX_JDK: ${{ matrix.jdk }}
-          MATRIX_CONFIG: ${{ matrix.config }}
+          MATRIX_JDK: ${{ matrix.jdk.version }}
+          MATRIX_CONFIG: ${{ matrix.jdk.config }}
         run: |
           echo "jdk=$MATRIX_JDK"
           echo "config=$MATRIX_CONFIG"
-
-#      - run: echo $MATRIX
-#        env:
-#          MATRIX: ${{ fromJSON(inputs.matrix) }}
