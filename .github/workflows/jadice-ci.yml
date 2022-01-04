@@ -97,7 +97,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: levigo/github-actions
-          ref: fb0cb4b39264d710dea7d4e50427228d836c6e99
+          ref: 2785a7560ce3157b03b9a2266afdc0fdfaa4f6be
           path: actions
           token: ${{ secrets.token }}
 
@@ -129,7 +129,7 @@ jobs:
 
       - uses: ./actions/code-analysis
         with:
-          sonarEnabled: ${{ inputs.sonarAnalysisEnabled }}
+          sonarAnalysisEnabled: ${{ inputs.sonarAnalysisEnabled }}
           sonarToken: ${{ secrets.sonarToken }}
           sonarURL: ${{ secrets.sonarURL }}
 
