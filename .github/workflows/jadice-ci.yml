@@ -97,7 +97,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: levigo/github-actions
-          ref: 380625e90eb91ef66626809643ab924500cf9f96
+          ref: 502aa3f9b51cb04b48be498dc7b1913d59b7b47f
           path: actions
           token: ${{ secrets.token }}
 
@@ -138,5 +138,6 @@ jobs:
           teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
           slackWebhookURL: ${{ secrets.slackWebhookURL }}
           slackChannel: ${{ inputs.slackChannel }}
+          slackMessage: Performed mvn build with JDK ${{ matrix.jdk.version }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
         if: always()
