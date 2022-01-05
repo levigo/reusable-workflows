@@ -19,6 +19,8 @@ on:
         type: string
         default: 'ci_qm_test'
     secrets:
+      token:
+        required: true
       repoUser:
         required: true
       repoPassword:
