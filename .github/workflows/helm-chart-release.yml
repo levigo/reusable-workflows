@@ -14,9 +14,6 @@ on:
       appVersion:
         required: true
         type: string
-      appVersionPrefix:
-        required: true
-        type: string
       slackChannel:
         required: false
         type: string
@@ -32,6 +29,8 @@ on:
         required: false
       teamsWebhookURL:
         required: false
+      appVersionPrefix:
+        required: true
 
 jobs:
   build:
@@ -56,7 +55,7 @@ jobs:
           helmChartDir: ${{ inputs.helmChartDir }}
           helmRepo: ${{ inputs.helmRepo }}
           appVersion: ${{ inputs.appVersion }}
-          appVersionPrefix: ${{ inputs.appVersionPrefix }}
+          appVersionPrefix: ${{ secrets.appVersionPrefix }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           repoUser: ${{ secrets.repoUser }}
           repoPassword: ${{ secrets.repoPassword }}
