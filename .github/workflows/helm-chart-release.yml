@@ -1,0 +1,72 @@
+name: Helm Chart Release
+
+on:
+  workflow_call:
+    inputs:
+      helmChartDir:
+        required: false
+        type: string
+        default: 'helm'
+      helmRepo:
+        required: false
+        type: string
+        default: 'helm-charts'
+      appVersion:
+        required: true
+        type: string
+      appVersionPrefix:
+        required: true
+        type: string
+      slackChannel:
+        required: false
+        type: string
+        default: 'ci_qm_test'
+    secrets:
+      repoUser:
+        required: true
+      repoPassword:
+        required: true
+      repoURL:
+        required: true
+      slackWebhookURL:
+        required: false
+      teamsWebhookURL:
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          ref: ${{github.sha}}
+
+      - uses: actions/checkout@v2
+        with:
+          repository: levigo/github-actions
+          ref: 7c51abb0198db47b30564044ebc5730d020148e6
+          path: actions
+          token: ${{ secrets.token }}
+
+      - uses: ./actions/helm-chart
+        with:
+          helmChartDir: ${{ inputs.helmChartDir }}
+          helmRepo: ${{ inputs.helmRepo }}
+          appVersion: ${{ inputs.appVersion }}
+          appVersionPrefix: ${{ inputs.appVersionPrefix }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          repoUser: ${{ secrets.repoUser }}
+          repoPassword: ${{ secrets.repoPassword }}
+          repoURL: ${{ secrets.repoURL }}
+
+      - uses: ./actions/notify-developers
+        with:
+          teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
+          slackWebhookURL: ${{ secrets.slackWebhookURL }}
+          slackChannel: ${{ inputs.slackChannel }}
+          slackMessage: Released Helm Chart ${{ inputs.helmChartName }} for AppVersion ${{ inputs.appVersion }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+        if: always()
