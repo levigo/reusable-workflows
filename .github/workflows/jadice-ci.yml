@@ -83,25 +83,28 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    timeout-minutes: 25
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
       matrix: ${{fromJSON(inputs.matrix)}}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@v2
+      - name: Checkout actions repository
+        uses: actions/checkout@v2
         with:
           repository: levigo/github-actions
           ref: 502aa3f9b51cb04b48be498dc7b1913d59b7b47f
           path: actions
           token: ${{ secrets.token }}
 
-      - uses: ./actions/setup-maven-java
+      - name: Setup Maven and Java
+        uses: ./actions/setup-maven-java
         with:
           java-version: ${{ matrix.jdk.version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -119,7 +122,8 @@ jobs:
           repoReleasePassword: ${{ secrets.repoReleasePassword }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: ./actions/maven-build
+      - name: Build with Maven
+        uses: ./actions/maven-build
         with:
           mavenCLIOptions: ${{ matrix.jdk.config }} ${{ env.MAVEN_CLI_OPTS }}
           xvfb: ${{ inputs.xvfb }}
@@ -127,13 +131,15 @@ jobs:
           java-version: ${{ matrix.jdk.version }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: ./actions/code-analysis
+      - name: Analyze Code
+        uses: ./actions/code-analysis
         with:
           sonarAnalysisEnabled: ${{ inputs.sonarAnalysisEnabled }}
           sonarToken: ${{ secrets.sonarToken }}
           sonarURL: ${{ secrets.sonarURL }}
 
-      - uses: ./actions/notify-developers
+      - name: Notify Developers
+        uses: ./actions/notify-developers
         with:
           teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
           slackWebhookURL: ${{ secrets.slackWebhookURL }}
