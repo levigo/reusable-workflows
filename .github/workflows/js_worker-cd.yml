@@ -97,6 +97,7 @@ jobs:
         run: |
           echo Releasing as ${{ env.NEW_VERSION }}
           mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=${{ env.NEW_VERSION }}
+          sed -i "s,\${application.formatted-version},${{ env.NEW_VERSION }}," src/main/resources/banner.txt || true
 
       ## Build and Test
       - name: Perform build
