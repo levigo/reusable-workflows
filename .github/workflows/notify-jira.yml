@@ -6,19 +6,19 @@ on:
       jiraProjectKey:
         required: true
         type: string
+      releaseVersion:
+        required: true
+        type: string
       mainBranch:
         required: false
         type: string
         default: 'origin/master'
-      releaseVersion:
-        required: true
-        type: string
       dryrun:
-        required: true
+        required: false
         type: boolean
         default: false
       archived:
-        required: true
+        required: false
         type: boolean
         default: false
     secrets:
@@ -45,19 +45,9 @@ jobs:
     continue-on-error: true
 
     steps:
-      - name: show workdir
-        run: |
-          pwd
-          ls -lahn
-          ls -lahn /home/runner/work/worker-analyzer/worker-analyzer || true
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: show workdir
-        run: |
-          pwd
-          ls -lahn
-          ls -lahn /home/runner/work/worker-analyzer/worker-analyzer || true
 
       - uses: actions/checkout@v2
         with:
