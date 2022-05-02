@@ -40,15 +40,15 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 1
           ref: ${{github.sha}}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: levigo/github-actions
-          ref: d365cd8012886b4585b79b1f961c8262f76424c1
+          ref: refs/tags/v0.1.0
           path: actions
           token: ${{ secrets.token }}
 
