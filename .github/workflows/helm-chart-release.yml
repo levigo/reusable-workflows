@@ -57,6 +57,12 @@ jobs:
           path: actions
           token: ${{ secrets.token }}
 
+      - run: |
+          git status
+          ls -lahn helm
+          cd helm
+          git status
+
       - uses: ./actions/helm-chart
         with:
           helmChartDir: ${{ inputs.helmChartDir }}
