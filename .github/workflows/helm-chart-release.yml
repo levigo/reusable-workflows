@@ -3,6 +3,10 @@ name: Helm Chart Release
 on:
   workflow_call:
     inputs:
+      nameOverride:
+        required: false
+        type: string
+        default: 'xy,xy'
       helmChartDir:
         required: false
         type: string
