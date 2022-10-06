@@ -90,11 +90,11 @@ jobs:
 
       ## Build and Test
       - name: Perform build
-        if: ! inputs.skipTests
+        if: ${{ ! inputs.skipTests }}
         run: mvn $MAVEN_CLI_OPTS package -Dmaven.test.failure.ignore=true -Djib.skip=true
 
       - name: Publish Test Report
-        if: ! inputs.skipTests
+        if: ${{ ! inputs.skipTests }}
         uses: scacap/action-surefire-report@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
