@@ -48,7 +48,7 @@ jobs:
         id: semanticversion
         uses: hennejg/github-tag-action@v4.2.4
         with:
-          release_branches: ¼{{ inputs.release_branches }}
+          release_branches: ${{ inputs.release_branches }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify and print new build number
