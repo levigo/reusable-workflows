@@ -4,33 +4,25 @@ on:
   workflow_call:
     inputs:
       sonarAnalysisEnabled:
-        required: true
+        required: false
         type: boolean
+        default: true
       skipTests:
         required: false
         type: boolean
         default: false
-      slackChannel:
+      mattermostChannel:
         required: false
         type: string
-        default: 'ci_qm_test'
-    secrets:
-      repoUser:
-        required: true
-      repoPassword:
-        required: true
-      repoURL:
-        required: true
-      registryURL:
-        required: true
-      sonarToken:
+        default: 'ci_js'
+      notifyMattermost:
         required: false
-      sonarURL:
+        type: boolean
+        default: true
+      notifyTeams:
         required: false
-      slackWebhookURL:
-        required: false
-      teamsWebhookURL:
-        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -46,10 +38,10 @@ jobs:
       MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -57,16 +49,15 @@ jobs:
 
       - name: Prepare maven settings
         env:
-          REGISTRY_URL: ${{ secrets.registryURL }}
-          REPOSITORY_URL: ${{ secrets.repoURL }}
-          REPOSITORY_USERID: ${{ secrets.repoUser }}
-          REPOSITORY_CREDENTIALS: ${{ secrets.repoPassword }}
-          SONAR_HOST_URL: ${{ secrets.sonarURL }}
-          SONAR_LOGIN: ${{ secrets.sonarToken }}
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_SNAPSHOTS }}
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
         run: |
           mkdir -p ~/.m2
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
-          echo ${{ inputs.skipTests }}
 
       ## Build and Test
       - name: Perform build
@@ -89,30 +80,26 @@ jobs:
       ## Static code analysis with sonarqube
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
+        continue-on-error: true
         run: mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true
 
-      - name: Set up Env
-        run: |
-          echo "NOTIFY_SLACK=${{ secrets.slackWebhookURL }}" >> $GITHUB_ENV
-          echo "NOTIFY_TEAMS=${{ secrets.teamsWebhookURL }}" >> $GITHUB_ENV
-
-      - name: Notify slack
+      - name: Notify Mattermost
         uses: hennejg/slack-build-notifier@v1.1
-        if: ${{ env.NOTIFY_SLACK }}
+        if: inputs.notifyMattermost
         with:
           username: GitHub
           icon_emoji: octocat
-          channel: ${{ inputs.slackChannel }}
+          channel: ${{ inputs.mattermostChannel }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.slackWebhookURL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify teams
         uses: toko-bifrost/ms-teams-deploy-card@master
-        if: ${{ env.NOTIFY_TEAMS }}
+        if: inputs.notifyTeams
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          webhook-uri: ${{ secrets.teamsWebhookURL }}
+          webhook-uri: ${{ secrets.JS_TEAMS_WEBHOOK_URL }}
           show-on-start: false
           show-on-exit: true
           show-on-failure: true
