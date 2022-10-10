@@ -62,7 +62,7 @@ jobs:
           git status
           ls -lahn helm
           cd helm
-          git status
+          git status || true
 
       - uses: ./actions/helm-chart
         with:
