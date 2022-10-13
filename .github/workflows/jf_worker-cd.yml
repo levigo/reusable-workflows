@@ -6,7 +6,7 @@ on:
       releaseBranches:
         required: false
         type: string
-        default: 'main'
+        default: '${{ github.event.repository.default_branch }}'
       skipTests:
         required: false
         type: boolean
@@ -109,11 +109,15 @@ jobs:
       - name: Deploy images
         env:
           REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          BASE_IMAGE: ${{ secrets.JSC_WORKER_BASE_IMAGE }}
         run: >
           mvn $MAVEN_CLI_OPTS package
           -Dmaven.test.skip=true -Dmaven.install.skip=true
           -Dgit.commit.id=${{ github.sha }}
-          -DenableDocker -Ddocker.registry.from=${REGISTRY_URL} -Ddocker.registry.to=${REGISTRY_URL}
+          -DenableDocker 
+          -Ddocker.registry.from=${REGISTRY_URL} 
+          -Ddocker.registry.to=${REGISTRY_URL}
+          -Ddocker.baseImage=${BASE_IMAGE}
 
       - name: Deploy packages
         if: inputs.mavenDeploy
