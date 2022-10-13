@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: levigo/github-actions
-          ref: '990e8b29d168043efc2b0000c583b372e6e00f10'
+          ref: 'fb45ad8ad11bb3b46edff31039163b19f604ab66'
           path: actions
           token: ${{ secrets.token }}
 
