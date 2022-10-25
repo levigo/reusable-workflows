@@ -60,6 +60,8 @@ jobs:
 
       - run: |
           git status
+          git submodule update --remote helm
+          git status
           ls -lahn helm
           cd helm
           git status || true
