@@ -47,6 +47,25 @@ on:
         required: false
         type: boolean
         default: false
+      jiraProjectKey:
+        description: 'The JIRA project key'
+        required: true
+        type: string
+      gitMainBranch:
+        description: 'Name of the main branch in git. Usually origin/main or origin/master. (default is origin/master)'
+        required: false
+        type: string
+        default: 'origin/master'
+      tagPrefix:
+        description: 'Optional git tag prefix. (default is "v")'
+        required: false
+        type: string
+        default: 'v'
+      releaseBranches:
+        description: 'Comma separated list of branches (bash reg exp accepted) that will generate the release tags. (default is "master")'
+        required: false
+        type: string
+        default: 'master'
     secrets:
       token:
         required: true
@@ -83,28 +102,25 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    timeout-minutes: 45
+    timeout-minutes: 25
 
     strategy:
       fail-fast: false
       matrix: ${{fromJSON(inputs.matrix)}}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Checkout actions repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
           repository: levigo/github-actions
           ref: 502aa3f9b51cb04b48be498dc7b1913d59b7b47f
           path: actions
           token: ${{ secrets.token }}
 
-      - name: Setup Maven and Java
-        uses: ./actions/setup-maven-java
+      - uses: ./actions/setup-maven-java
         with:
           java-version: ${{ matrix.jdk.version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -122,8 +138,7 @@ jobs:
           repoReleasePassword: ${{ secrets.repoReleasePassword }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build with Maven
-        uses: ./actions/maven-build
+      - uses: ./actions/maven-build
         with:
           mavenCLIOptions: ${{ matrix.jdk.config }} ${{ env.MAVEN_CLI_OPTS }}
           xvfb: ${{ inputs.xvfb }}
@@ -131,15 +146,27 @@ jobs:
           java-version: ${{ matrix.jdk.version }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Analyze Code
-        uses: ./actions/code-analysis
+      - uses: ./actions/versioning
         with:
-          sonarAnalysisEnabled: ${{ inputs.sonarAnalysisEnabled }}
-          sonarToken: ${{ secrets.sonarToken }}
-          sonarURL: ${{ secrets.sonarURL }}
+          tagPrefix: ${{ inputs.tagPrefix }}
+          releaseBranches:  ${{ inputs.releaseBranches }}
+          githubToken:  ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Notify Developers
-        uses: ./actions/notify-developers
+      - name: notify JIRA
+        uses: ./.github/actions/composite-jira
+        with:
+          jiraProjectKey: ${{ inputs.jiraProjectKey }}
+          mainBranch: ${{ inputs.gitMainBranch }}
+          releaseVersion: 0.1.2
+          jiraUser: ${{ secrets.JIRA_USER }}
+          jiraPassword: ${{ secrets.JIRA_PASSWORD }}
+          jiraURL: ${{ secrets.JIRA_BASE_URL }}
+          repoUser: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          repoPassword: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          registryURL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          token: ${{ secrets.REPO_PTA }}
+
+      - uses: ./actions/notify-developers
         with:
           teamsWebhookURL: ${{ secrets.teamsWebhookURL }}
           slackWebhookURL: ${{ secrets.slackWebhookURL }}
