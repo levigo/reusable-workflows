@@ -62,7 +62,20 @@ jobs:
       ## Build and Test
       - name: Perform build
         if: inputs.skipTests == false
-        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
+        run: |
+          mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true  -DenableDocker jib:dockerBuild
+          echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
+
+      - name: Scan container image
+        if: inputs.skipTests == false
+        uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
+        with:
+          image-name: ${{ env.CONTAINER_IMAGE }}
+#        env:
+#          DOCKLE_HOST: "unix:///var/run/docker.sock"
+#          # workaround for scanning local images, see:
+#          #   https://github.com/goodwithtech/dockle/issues/188
+#          #   https://github.com/Azure/container-scan/issues/146
 
       - name: Publish Test Report
         if: inputs.skipTests == false
