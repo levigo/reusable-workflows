@@ -49,7 +49,7 @@ jobs:
 
       - name: Prepare maven settings
         env:
-          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_SNAPSHOTS }}
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
           REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
           REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
           REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
@@ -62,8 +62,15 @@ jobs:
       ## Build and Test
       - name: Perform build
         if: inputs.skipTests == false
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          BASE_IMAGE: ${{ secrets.JSC_WORKER_BASE_IMAGE }}
         run: |
-          mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true  -DenableDocker jib:dockerBuild
+          mvn $MAVEN_CLI_OPTS verify \
+            -Dmaven.test.failure.ignore=true \
+            -DenableDocker jib:dockerBuild \
+            -Ddocker.registry.from=${REGISTRY_URL} 
+            -Ddocker.baseImage=${BASE_IMAGE}
           echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
 
       - name: Scan container image
