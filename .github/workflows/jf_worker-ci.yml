@@ -68,9 +68,10 @@ jobs:
         run: |
           mvn $MAVEN_CLI_OPTS verify \
             -Dmaven.test.failure.ignore=true \
-            -DenableDocker jib:dockerBuild \
-            -Ddocker.registry.from=${REGISTRY_URL} 
-            -Ddocker.baseImage=${BASE_IMAGE}
+            -DenableDocker \
+            -Ddocker.registry.from=${REGISTRY_URL} \
+            -Ddocker.baseImage=${BASE_IMAGE} \
+            jib:dockerBuild
           echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
 
       - name: Scan container image
