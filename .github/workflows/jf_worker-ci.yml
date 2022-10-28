@@ -82,6 +82,7 @@ jobs:
 
       - name: Scan container image
         if: inputs.skipTests == false
+        continue-on-error: true
         uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
         with:
           image-name: ${{ env.CONTAINER_IMAGE }}
