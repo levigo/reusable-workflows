@@ -70,10 +70,15 @@ jobs:
             -Dmaven.test.failure.ignore=true \
             -DenableDocker \
             -Ddocker.registry.from=${REGISTRY_URL} \
-            -Ddocker.registry.to=${REGISTRY_URL} \
-            -Ddocker.baseImage=${BASE_IMAGE} \
-            jib:dockerBuild
+            -Ddocker.registry.to=${REGISTRY_URL}
           echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.LEVIGO_NEXUS_REGISTRY_SNAPSHOTS }}
+          username: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          password: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
 
       - name: Scan container image
         if: inputs.skipTests == false
