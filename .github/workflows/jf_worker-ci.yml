@@ -71,7 +71,8 @@ jobs:
             -DenableDocker \
             -Ddocker.registry.from=${REGISTRY_URL} \
             -Ddocker.registry.to=${REGISTRY_URL} \
-            -Ddocker.baseImage=${BASE_IMAGE}
+            -Ddocker.baseImage=${BASE_IMAGE} \
+            jib:dockerBuild
           echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
 
       - name: Scan container image
