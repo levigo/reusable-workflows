@@ -49,7 +49,7 @@ jobs:
 
       - name: Prepare maven settings
         env:
-          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_SNAPSHOTS }}
           REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
           REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
           REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
@@ -63,7 +63,7 @@ jobs:
       - name: Perform build
         if: inputs.skipTests == false
         env:
-          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_SNAPSHOTS }}
           BASE_IMAGE: ${{ secrets.JSC_WORKER_BASE_IMAGE }}
         run: |
           mvn $MAVEN_CLI_OPTS verify \
