@@ -23,6 +23,10 @@ on:
         required: false
         type: boolean
         default: false
+      scanImage:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -49,7 +53,7 @@ jobs:
 
       - name: Prepare maven settings
         env:
-          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_SNAPSHOTS }}
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
           REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
           REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
           REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
@@ -63,6 +67,26 @@ jobs:
       - name: Perform build
         if: inputs.skipTests == false
         run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
+
+      ## Build and Test + Scan
+      - name: Perform build
+        if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+        run: |
+          mvn $MAVEN_CLI_OPTS verify \
+            -Dmaven.test.failure.ignore=true \
+            -DenableDocker \
+            -Ddocker.registry.from=${REGISTRY_URL} \
+            -Djib-maven-plugin.goal=dockerBuild
+          echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
+
+      - name: Scan container image
+        continue-on-error: true
+        if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
+        uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
+        with:
+          image-name: ${{ env.CONTAINER_IMAGE }}
 
       - name: Publish Test Report
         if: inputs.skipTests == false
