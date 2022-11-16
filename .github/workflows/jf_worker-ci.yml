@@ -100,6 +100,12 @@ jobs:
           fail_if_no_tests: true
 
       ## run in case 3.
+      - name: Get allowed-list
+        run: |
+          if [ ! -f .github/containerscan/allowedlist.yaml ]; then
+              echo "create allowedlist.yaml from secret" ;
+              echo "${{ secrets.CONTAINERSCAN_ALLOWED_LIST }}" > .github/containerscan/allowedlist.yaml ;
+          fi
       - name: Scan container image
         if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
         uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
@@ -113,7 +119,8 @@ jobs:
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
         continue-on-error: true
-        run: mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true
+        run: |
+          mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html
 
       - name: Notify Mattermost
         uses: hennejg/slack-build-notifier@v1.1
