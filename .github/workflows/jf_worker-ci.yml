@@ -26,7 +26,7 @@ on:
       scanImage:
         required: false
         type: boolean
-        default: false
+        default: true
 
 jobs:
   build:
@@ -63,12 +63,21 @@ jobs:
           mkdir -p ~/.m2
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
 
-      ## Build and Test
+      ##
+      ## Starting here, there are 3 branches in the workflow
+      ##
+
+      ## 1. Build without running Tests
       - name: Perform build
-        if: inputs.skipTests == false
+        if: inputs.skipTests
+        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
+
+      ## 2. Build and Test
+      - name: Perform build
+        if: ${{ inputs.skipTests == false && inputs.scanImage == false }}
         run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
 
-      ## Build and Test + Scan
+      ## 3. Build and Test + Build Image (default)
       - name: Perform build
         if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
         env:
@@ -81,13 +90,7 @@ jobs:
             -Djib-maven-plugin.goal=dockerBuild
           echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
 
-      - name: Scan container image
-        continue-on-error: true
-        if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
-        uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
-        with:
-          image-name: ${{ env.CONTAINER_IMAGE }}
-
+      ## run in case 2. and 3.
       - name: Publish Test Report
         if: inputs.skipTests == false
         uses: scacap/action-surefire-report@v1
@@ -96,12 +99,17 @@ jobs:
           fail_on_test_failures: true
           fail_if_no_tests: true
 
-      ## Build without running Tests
-      - name: Perform build
-        if: inputs.skipTests
-        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
+      ## run in case 3.
+      - name: Scan container image
+        if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
+        uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
+        with:
+          image-name: ${{ env.CONTAINER_IMAGE }}
 
-      ## Static code analysis with sonarqube
+      ##
+      ## End of branches
+      ##
+
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
         continue-on-error: true
