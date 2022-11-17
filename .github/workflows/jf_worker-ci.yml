@@ -104,6 +104,7 @@ jobs:
         run: |
           if [ ! -f .github/containerscan/allowedlist.yaml ]; then
               echo "create allowedlist.yaml from secret" ;
+              mkdir -p .github/containerscan ;
               echo "${{ secrets.CONTAINERSCAN_ALLOWED_LIST }}" > .github/containerscan/allowedlist.yaml ;
           fi
       - name: Scan container image
