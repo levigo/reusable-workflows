@@ -100,13 +100,6 @@ jobs:
           fail_if_no_tests: true
 
       ## run in case 3.
-      - name: Get allowed-list
-        run: |
-          if [ ! -f .github/containerscan/allowedlist.yaml ]; then
-              echo "create allowedlist.yaml from secret" ;
-              mkdir -p .github/containerscan ;
-              echo "${{ secrets.CONTAINERSCAN_ALLOWED_LIST }}" > .github/containerscan/allowedlist.yaml ;
-          fi
       - name: Scan container image
         if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
         uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
