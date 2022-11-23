@@ -64,20 +64,20 @@ jobs:
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
 
       ##
-      ## Starting here, there are 3 branches in the workflow
+      ## Starting here, there are 4 branches in the workflow
       ##
 
-      ## 1. Build without running Tests
+      ## 1. Maven Build without running Tests
       - name: Perform build
-        if: inputs.skipTests
+        if: ${{ inputs.skipTests == true && inputs.scanImage == false }}
         run: mvn $MAVEN_CLI_OPTS verify -DskipTests
 
-      ## 2. Build and Test
+      ## 2. Maven Build and run Tests
       - name: Perform build
         if: ${{ inputs.skipTests == false && inputs.scanImage == false }}
         run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
 
-      ## 3. Build and Test + Build Image (default)
+      ## 3. Maven Build + Image Build and run Tests (default)
       - name: Perform build
         if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
         env:
@@ -90,6 +90,20 @@ jobs:
             -Djib-maven-plugin.goal=dockerBuild
           echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
 
+      ## 4. Maven Build + Image Build without running Tests
+      - name: Perform build
+        if: ${{ inputs.skipTests == true && inputs.scanImage == true }}
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+        run: |
+          mvn $MAVEN_CLI_OPTS verify \
+            -Dmaven.test.failure.ignore=true \
+            -DenableDocker \
+            -Ddocker.registry.from=${REGISTRY_URL} \
+            -Djib-maven-plugin.goal=dockerBuild
+          echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
+
+
       ## run in case 2. and 3.
       - name: Publish Test Report
         if: inputs.skipTests == false
@@ -99,16 +113,9 @@ jobs:
           fail_on_test_failures: true
           fail_if_no_tests: true
 
-      ## run in case 3.
-      - name: Get allowed-list
-        run: |
-          if [ ! -f .github/containerscan/allowedlist.yaml ]; then
-              echo "create allowedlist.yaml from secret" ;
-              mkdir -p .github/containerscan ;
-              echo "${{ secrets.CONTAINERSCAN_ALLOWED_LIST }}" > .github/containerscan/allowedlist.yaml ;
-          fi
+      ## run in case 3. and 4.
       - name: Scan container image
-        if: ${{ inputs.skipTests == false && inputs.scanImage == true }}
+        if: inputs.scanImage == true
         uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
         with:
           image-name: ${{ env.CONTAINER_IMAGE }}
