@@ -14,7 +14,7 @@ on:
       mavenDeploy:
         required: false
         type: boolean
-        default: false
+        default: true
       mattermostChannel:
         required: false
         type: string
