@@ -116,9 +116,18 @@ jobs:
       ## run in case 3. and 4.
       - name: Scan container image
         if: inputs.scanImage == true
-        uses: azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93
+        uses: aquasecurity/trivy-action@master
+        # workaround for timeout issue
+        # - see https://github.com/aquasecurity/trivy-action/issues/190 and https://github.com/aquasecurity/trivy/issues/3421
+        env:
+          TRIVY_OFFLINE_SCAN: true
         with:
-          image-name: ${{ env.CONTAINER_IMAGE }}
+          image-ref: '${{ env.CONTAINER_IMAGE }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: false
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
       ##
       ## End of branches
