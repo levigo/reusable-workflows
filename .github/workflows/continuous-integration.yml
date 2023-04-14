@@ -1,0 +1,110 @@
+name: Continuous Integration
+
+on:
+  workflow_call:
+    inputs:
+      sonarAnalysisEnabled:
+        required: false
+        type: boolean
+        default: true
+      skipTests:
+        required: false
+        type: boolean
+        default: false
+      mattermostChannel:
+        required: false
+        type: string
+        default: 'ci_qm_test'
+      notifyMattermost:
+        required: false
+        type: boolean
+        default: true
+      scanImage:
+        required: false
+        type: boolean
+        default: true
+#   valid values: "11", "[8,17]" etc.
+      matrix:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    env:
+      # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
+      # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+      MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+      # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+      # when running from the command line.
+      # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+      MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(inputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+          cache: 'maven'
+
+      - name: Prepare maven settings
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+        run: |
+          mkdir -p ~/.m2
+          envsubst < ./.github/settings.xml > ~/.m2/settings.xml
+
+      ##
+      ## Starting here, there are 4 branches in the workflow
+      ##
+
+      ## 1. Maven Build without running Tests
+      - name: Perform build
+        if: ${{ inputs.skipTests == true }}
+        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
+
+      ## 2. Maven Build and run Tests
+      - name: Perform build
+        if: ${{ inputs.skipTests == false }}
+        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true
+
+      ## run in case 2.
+      - name: Publish Test Report
+        if: inputs.skipTests == false
+        uses: scacap/action-surefire-report@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_test_failures: true
+          fail_if_no_tests: true
+
+      - name: Perform sonar analysis
+        if: inputs.sonarAnalysisEnabled
+        continue-on-error: true
+        run: |
+          mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html
+
+      - name: Notify Mattermost
+        uses: 8398a7/action-slack@v3
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref
+          text: ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: inputs.notifyMattermost && always()
