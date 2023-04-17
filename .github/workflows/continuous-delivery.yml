@@ -98,7 +98,8 @@ jobs:
           echo Releasing as ${{ steps.semanticversion.outputs.new_version }}
           mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=${{ steps.semanticversion.outputs.new_version }}
 
-      ## Build and Test
+      ## ----------------------------------------
+      ## A - Build and Test
       - name: Perform build
         if: ${{ ! inputs.skipTests }}
         run: mvn $MAVEN_CLI_OPTS package -Dmaven.test.failure.ignore=true -Djib.skip=true
@@ -111,7 +112,7 @@ jobs:
           fail_on_test_failures: true
           fail_if_no_tests: true
 
-      ## Build without running Tests
+      ## B - Build without running Tests
       - name: Perform build
         if: inputs.skipTests
         run: mvn $MAVEN_CLI_OPTS verify -DskipTests
@@ -119,6 +120,7 @@ jobs:
       - name: Deploy packages
         if: inputs.mavenDeploy
         run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
+      ## ----------------------------------------
 
       - name: create release and upload release asset
         uses: softprops/action-gh-release@v1
@@ -127,17 +129,6 @@ jobs:
           name: ${{ steps.semanticversion.outputs.new_version }}
           draft: false
           prerelease: false
-
-      - name: Notify Mattermost
-        uses: hennejg/slack-build-notifier@v1.1
-        if: inputs.notifyMattermost
-        with:
-          username: GitHub
-          icon_emoji: octocat
-          channel: ${{ inputs.mattermostChannel }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Mattermost
         uses: 8398a7/action-slack@v3

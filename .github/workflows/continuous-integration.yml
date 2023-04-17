@@ -23,7 +23,7 @@ on:
         required: false
         type: boolean
         default: true
-#   valid values: "11", "[8,17]" etc.
+# expected value is a JSON String. Example: '{"jdk": [11,17]}'
       matrix:
         required: true
         type: string
