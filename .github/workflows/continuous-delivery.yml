@@ -16,7 +16,7 @@ on:
         type: boolean
         default: true
       mattermostChannel:
-        required: false
+        required: true
         type: string
       notifyMattermost:
         required: false
@@ -51,14 +51,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Bump version and create tag
-        id: semanticversion
-        uses: hennejg/github-tag-action@v4.2.4
-        with:
-          release_branches: ${{ inputs.release_branches }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
 
       ## Set new version
       - name: Bump version and create tag
