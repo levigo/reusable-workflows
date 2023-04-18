@@ -11,6 +11,11 @@
             <password>${REPOSITORY_CREDENTIALS}</password>
         </server>
         <server>
+            <id>maven2.releases.levigo.de</id>
+            <username>${REPOSITORY_USERID}</username>
+            <password>${REPOSITORY_CREDENTIALS}</password>
+        </server>
+        <server>
             <id>nexus3.releases.levigo.net</id>
             <username>${REPOSITORY_USERID}</username>
             <password>${REPOSITORY_CREDENTIALS}</password>
