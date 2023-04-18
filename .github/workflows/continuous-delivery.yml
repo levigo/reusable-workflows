@@ -86,6 +86,8 @@ jobs:
           REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
           REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
           REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          REPOSITORY_RELEASE_USERID: ${{ secrets.NEXUS2_USERNAME }}
+          REPOSITORY_RELEASE_CREDENTIALS: ${{ secrets.NEXUS2_PASSWORD }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
         run: |
