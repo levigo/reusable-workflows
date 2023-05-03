@@ -1,0 +1,149 @@
+name: Continuous Delivery
+
+on:
+  workflow_call:
+    inputs:
+      releaseBranches:
+        required: false
+        type: string
+        default: '${{ github.event.repository.default_branch }}'
+      skipTests:
+        required: false
+        type: boolean
+        default: false
+      mavenDeploy:
+        required: false
+        type: boolean
+        default: true
+      mattermostChannel:
+        required: true
+        type: string
+      notifyMattermost:
+        required: false
+        type: boolean
+        default: true
+      fetchAllTags:
+        required: false
+        type: boolean
+        default: false
+      tagPrefix:
+        required: false
+        type: string
+        default: 'v'
+# only one version at the time
+# for the syntax see https://github.com/actions/setup-java#supported-version-syntax
+      jdkVersion:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    env:
+      # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
+      # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+      MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+      # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+      # when running from the command line.
+      # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+      MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      ## Set new version
+      - name: Bump version and create tag
+        id: semanticversion
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          release_branches: ${{ inputs.release_branches }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fetch_all_tags: ${{ inputs.fetchAllTags }}
+          tag_prefix: ${{ inputs.tagPrefix }}
+
+      - name: Verify and print new build number
+        run: |
+          if echo '${{ steps.semanticversion.outputs.new_tag }}' |grep -Eq '^${{ inputs.tagPrefix }}[0-9]+[.][0-9]+[.][0-9]+$'; then
+            echo Tag '${{ steps.semanticversion.outputs.new_tag }}', New version '${{ steps.semanticversion.outputs.new_version }}', Changelog '${{ steps.semanticversion.outputs.changelog }}'
+          else
+            echo 'unexpected tag format - aborting'
+            exit -1
+          fi
+
+      ## Configure JDK
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.jdkVersion }}
+          cache: 'maven'
+
+      ## Configure maven settings
+      - name: Prepare maven settings
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          REPOSITORY_RELEASE_USERID: ${{ secrets.NEXUS2_USERNAME }}
+          REPOSITORY_RELEASE_CREDENTIALS: ${{ secrets.NEXUS2_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+        run: |
+          mkdir -p ~/.m2
+          envsubst < ./.github/settings.xml > ~/.m2/settings.xml
+
+      - name: Set version
+        id: version
+        run: |
+          echo Releasing as ${{ steps.semanticversion.outputs.new_version }}
+          mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=${{ steps.semanticversion.outputs.new_version }}
+
+      ## ----------------------------------------
+      ## A - Build and Test
+      - name: Perform build
+        if: ${{ ! inputs.skipTests }}
+        run: mvn $MAVEN_CLI_OPTS package -Dmaven.test.failure.ignore=true -Djib.skip=true
+
+      - name: Publish Test Report
+        if: ${{ ! inputs.skipTests }}
+        uses: scacap/action-surefire-report@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_test_failures: true
+          fail_if_no_tests: true
+
+      ## B - Build without running Tests
+      - name: Perform build
+        if: inputs.skipTests
+        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
+
+      - name: Deploy packages
+        if: inputs.mavenDeploy
+        run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
+      ## ----------------------------------------
+
+      # we need the personal access token here, as otherwise creating the release won't trigger a second workflow, that
+      # might be waiting for that release event.
+      - name: create release and upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.semanticversion.outputs.new_tag }}
+          name: ${{ steps.semanticversion.outputs.new_version }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.REPO_PTA }}
+
+      - name: Notify Mattermost
+        uses: 8398a7/action-slack@v3
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref
+          text: ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: inputs.notifyMattermost && always()
