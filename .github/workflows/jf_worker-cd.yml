@@ -30,7 +30,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     env:
       # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -46,7 +46,7 @@ jobs:
 
       - name: Bump version and create tag
         id: semanticversion
-        uses: hennejg/github-tag-action@v4.2.4
+        uses: mathieudutour/github-tag-action@v6.1
         with:
           release_branches: ${{ inputs.release_branches }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -138,20 +138,22 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/dispatches \
             -d '{"event_type":"release_created","client_payload":{"version":"${{ steps.semanticversion.outputs.new_version }}"}}'
 
-      - name: Notify Mattermost
-        uses: hennejg/slack-build-notifier@v1.1
-        if: inputs.notifyMattermost
+      - name: Notify Developers
+        uses: 8398a7/action-slack@v3
+        if: inputs.notifyMattermost && always()
         with:
           username: GitHub
           icon_emoji: octocat
           channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: Released new version `${{ env.NEW_VERSION }}` of *${{ github.repository }}*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify teams
         uses: toko-bifrost/ms-teams-deploy-card@master
-        if: inputs.notifyTeams
+        if: inputs.notifyTeams && always()
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           webhook-uri: ${{ secrets.JS_TEAMS_WEBHOOK_URL }}
