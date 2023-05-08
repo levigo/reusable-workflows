@@ -92,7 +92,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: ${{ inputs.javaDistribution }}
-          jdkVersion: ${{ inputs.jdkVersion }}
+          java-version: ${{ inputs.jdkVersion }}
           cache: 'maven'
 
       ## Configure maven settings
