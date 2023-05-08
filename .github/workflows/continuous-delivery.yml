@@ -49,6 +49,12 @@ on:
         required: false
         type: string
         default: ''
+    # for more info: https://docs.github.com/en/actions/using-workflows/reusing-workflows#using-outputs-from-a-reusable-workflow
+    outputs:
+      releaseVersion:
+        description: "increased version, according to semver"
+        value: ${{ jobs.build.outputs.releaseVersion }}
+
 
 jobs:
   build:
