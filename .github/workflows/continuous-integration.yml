@@ -27,6 +27,11 @@ on:
       matrix:
         required: true
         type: string
+      javaDistribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        type: string
+        default: 'temurin'
 
 jobs:
   build:
@@ -51,7 +56,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: ${{ inputs.javaDistribution }}
           java-version: ${{ matrix.jdk }}
           cache: 'maven'
 

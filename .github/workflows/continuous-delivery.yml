@@ -30,11 +30,25 @@ on:
         required: false
         type: string
         default: 'v'
+      sonarAnalysisEnabled:
+        required: false
+        type: boolean
+        default: false
 # only one version at the time
 # for the syntax see https://github.com/actions/setup-java#supported-version-syntax
       jdkVersion:
         required: true
         type: string
+      javaDistribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        type: string
+        default: 'temurin'
+      releasePrefix:
+        description: 'if needed, e.g. for a 4-digit version, this will be the prefix to the version calculated by the version action'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   build:
@@ -48,6 +62,8 @@ jobs:
       # when running from the command line.
       # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
       MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+    outputs:
+      releaseVersion: ${{ inputs.releasePrefix }}${{ steps.semanticversion.outputs.new_version }}
 
     steps:
       - uses: actions/checkout@v3
@@ -57,7 +73,7 @@ jobs:
         id: semanticversion
         uses: mathieudutour/github-tag-action@v6.1
         with:
-          release_branches: ${{ inputs.release_branches }}
+          release_branches: ${{ inputs.releaseBranches }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fetch_all_tags: ${{ inputs.fetchAllTags }}
           tag_prefix: ${{ inputs.tagPrefix }}
@@ -75,8 +91,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: ${{ inputs.jdkVersion }}
+          distribution: ${{ inputs.javaDistribution }}
+          jdkVersion: ${{ inputs.jdkVersion }}
           cache: 'maven'
 
       ## Configure maven settings
@@ -123,6 +139,12 @@ jobs:
         if: inputs.mavenDeploy
         run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
       ## ----------------------------------------
+
+      - name: Perform sonar analysis
+        if: inputs.sonarAnalysisEnabled
+        continue-on-error: true
+        run: |
+          mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html
 
       # we need the personal access token here, as otherwise creating the release won't trigger a second workflow, that
       # might be waiting for that release event.
