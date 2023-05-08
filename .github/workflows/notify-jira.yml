@@ -17,12 +17,16 @@ on:
         required: false
         type: number
         default: 1000
+      timeoutMinutes:
+        required: false
+        type: number
+        default: 5
 
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: ${{ inputs.timeoutMinutes }}
 
     strategy:
       fail-fast: false

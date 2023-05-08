@@ -34,6 +34,9 @@ on:
         required: false
         type: boolean
         default: false
+      timeoutMinutes:
+        required: true
+        type: number
 # only one version at the time
 # for the syntax see https://github.com/actions/setup-java#supported-version-syntax
       jdkVersion:
@@ -59,7 +62,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: ${{ inputs.timeoutMinutes}}
     env:
       # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
       # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
