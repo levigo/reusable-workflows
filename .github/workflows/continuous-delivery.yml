@@ -44,6 +44,10 @@ on:
         required: false
         type: boolean
         default: false
+      additionalMavenOpts:
+        required: false
+        type: string
+        default: ''
         
       mavenDeploy:
         required: false
@@ -92,6 +96,7 @@ jobs:
       # when running from the command line.
       # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
       MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+      REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
     outputs:
       releaseVersion: ${{ inputs.releasePrefix }}${{ steps.semanticversion.outputs.new_version }}
 
@@ -128,7 +133,6 @@ jobs:
       ## Configure maven settings
       - name: Prepare maven settings
         env:
-          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
           REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
           REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
           REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
@@ -150,7 +154,7 @@ jobs:
       ## A - Build and Test
       - name: Perform build
         if: ${{ ! inputs.skipTests }}
-        run: mvn $MAVEN_CLI_OPTS package -Dmaven.test.failure.ignore=true -Djib.skip=true
+        run: mvn $MAVEN_CLI_OPTS ${{ inputs.additionalMavenOpts }} package -Dmaven.test.failure.ignore=true -Djib.skip=true
 
       - name: Publish Test Report
         if: ${{ ! inputs.skipTests }}
@@ -163,7 +167,7 @@ jobs:
       ## B - Build without running Tests
       - name: Perform build
         if: inputs.skipTests
-        run: mvn $MAVEN_CLI_OPTS verify -DskipTests
+        run: mvn $MAVEN_CLI_OPTS ${{ inputs.additionalMavenOpts }} verify -DskipTests
 
       - name: Deploy packages
         if: inputs.mavenDeploy
