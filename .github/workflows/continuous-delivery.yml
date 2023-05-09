@@ -54,7 +54,13 @@ on:
         required: false
         type: boolean
         default: false
-      
+
+      # files to be attached to the github release
+      releaseFiles:
+        required: false
+        type: string
+        default: ''
+
       mattermostChannel:
         required: true
         type: string
@@ -166,8 +172,6 @@ jobs:
         run: |
           mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html
 
-      # we need the personal access token here, as otherwise creating the release won't trigger a second workflow, that
-      # might be waiting for that release event.
       - name: create release and upload release asset
         uses: softprops/action-gh-release@v1
         with:
@@ -175,8 +179,19 @@ jobs:
           name: ${{ steps.semanticversion.outputs.new_version }}
           draft: false
           prerelease: false
-          token: ${{ secrets.REPO_PTA }}
+          files: |
+            ${{ inputs.releaseFiles }}
 
+      # we really need this if the release should trigger a second workflow. the step above will NOT trigger a second workflow.
+      - name: dispatch release event
+        run: |
+          curl \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type":"release_created","client_payload":{"version":"${{ steps.semanticversion.outputs.new_version }}"}}'      
+            
       - name: Notify Mattermost
         uses: 8398a7/action-slack@v3
         with:
