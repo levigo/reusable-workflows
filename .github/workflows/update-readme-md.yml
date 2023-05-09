@@ -44,6 +44,7 @@ jobs:
           git add README.md
           git commit -m "Edit README.md to contain correct version ${{ inputs.releaseVersion }}"
 
+      # push the changes ATTENTION: you MUST exclude the readme.md from the push triggers, or you end up risking an endless loop of builds
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
