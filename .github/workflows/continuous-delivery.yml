@@ -152,7 +152,7 @@ jobs:
 
       ## ----------------------------------------
       ## A - Build and Test
-      - name: Perform build
+      - name: Perform build - option with tests
         if: ${{ ! inputs.skipTests }}
         run: mvn $MAVEN_CLI_OPTS ${{ inputs.additionalMavenOpts }} package -Dmaven.test.failure.ignore=true -Djib.skip=true
 
@@ -165,14 +165,14 @@ jobs:
           fail_if_no_tests: true
 
       ## B - Build without running Tests
-      - name: Perform build
+      - name: Perform build - option without tests
         if: inputs.skipTests
         run: mvn $MAVEN_CLI_OPTS ${{ inputs.additionalMavenOpts }} verify -DskipTests
+      ## ----------------------------------------
 
       - name: Deploy packages
         if: inputs.mavenDeploy
         run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
-      ## ----------------------------------------
 
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
