@@ -1,0 +1,71 @@
+name: Notify JIRA
+
+on:
+  workflow_call:
+    inputs:
+      releaseVersion:
+        required: true
+        type: string
+      mainBranch:
+        required: false
+        type: string
+        default: 'master'
+      mattermostChannel:
+        required: false
+        type: string
+      fetchDepth:
+        required: false
+        type: number
+        default: 1000
+      timeoutMinutes:
+        required: false
+        type: number
+        default: 5
+
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ inputs.timeoutMinutes }}
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: ${{ inputs.fetchDepth }}
+
+      - uses: levigo/github-action-glix@v1.1
+        if: contains(github.event.head_commit.message, 'levigo/dependabot') == false
+        name: Get the Jira issue keys from commit messages
+        id: glix
+        with:
+          commitId: ${{ github.sha }}
+          mainBranch: ${{ inputs.mainBranch }}
+
+      - name: Jira Cloud create and set fix version
+        if: contains(github.event.head_commit.message, 'levigo/dependabot') == false
+        uses: levigo/github-action-jira-fixversion@v1.2
+        with:
+          domain: ${{ secrets.JIRA_CLOUD_DOMAIN }}
+          username: ${{ secrets.JIRA_CLOUD_USER }}
+          password: ${{ secrets.JIRA_CLOUD_PERSONAL_TOKEN }}
+          versionName: ${{ inputs.releaseVersion }}
+          versionDescription: "CD Release"
+          versionArchived: true
+          issueKeys: ${{ steps.glix.outputs.issueKeys }}
+
+      - name: Notify Mattermost
+        uses: 8398a7/action-slack@v3
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: Failed to update the JIRA issue for version `${{ inputs.releaseVersion }}` of *${{ github.repository }}*
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: ${{ inputs.mattermostChannel != '' }} && ${{ failure() }}
+

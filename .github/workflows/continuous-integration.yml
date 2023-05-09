@@ -3,14 +3,32 @@ name: Continuous Integration
 on:
   workflow_call:
     inputs:
-      sonarAnalysisEnabled:
+      timeoutMinutes:
         required: false
-        type: boolean
-        default: true
+        type: number
+        default: 10
+
+      # expected value is a JSON String. Example: '{"jdk": [11,17]}'
+      matrix:
+        required: true
+        type: string
+        
+      javaDistribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        type: string
+        default: 'temurin'
+        
       skipTests:
         required: false
         type: boolean
         default: false
+        
+      sonarAnalysisEnabled:
+        required: false
+        type: boolean
+        default: true
+        
       mattermostChannel:
         required: false
         type: string
@@ -19,19 +37,11 @@ on:
         required: false
         type: boolean
         default: true
-      scanImage:
-        required: false
-        type: boolean
-        default: true
-# expected value is a JSON String. Example: '{"jdk": [11,17]}'
-      matrix:
-        required: true
-        type: string
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: ${{ inputs.timeoutMinutes}}
     env:
       # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
       # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
@@ -51,7 +61,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: ${{ inputs.javaDistribution }}
           java-version: ${{ matrix.jdk }}
           cache: 'maven'
 
