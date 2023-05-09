@@ -3,26 +3,23 @@ name: Continuous Delivery
 on:
   workflow_call:
     inputs:
-      releaseBranches:
+      timeoutMinutes:
+        description: 'Amount of minutes, after that a build shall be aborted'
+        required: false
+        type: number
+        default: 10
+        
+      releasePrefix:
+        description: 'if needed, e.g. for a 4-digit version, this will be the prefix to the version calculated by the version action'
+        required: false
+        type: string
+        default: ''        
+        
+      releaseBranches:        
         description: 'Comma separated list of branches that will generate the release tags.'
         required: false
         type: string
         default: '${{ github.event.repository.default_branch }}'
-      skipTests:
-        required: false
-        type: boolean
-        default: false
-      mavenDeploy:
-        required: false
-        type: boolean
-        default: true
-      mattermostChannel:
-        required: true
-        type: string
-      notifyMattermost:
-        required: false
-        type: boolean
-        default: true
       fetchAllTags:
         required: false
         type: boolean
@@ -30,29 +27,42 @@ on:
       tagPrefix:
         required: false
         type: string
-        default: 'v'
-      sonarAnalysisEnabled:
-        required: false
-        type: boolean
-        default: false
-      timeoutMinutes:
-        required: true
-        type: number
-# only one version at the time
-# for the syntax see https://github.com/actions/setup-java#supported-version-syntax
-      jdkVersion:
-        required: true
-        type: string
+        default: 'v'        
+        
       javaDistribution:
         description: 'The Java distribution to use. (defaults to eclipse "temurin")'
         required: false
         type: string
         default: 'temurin'
-      releasePrefix:
-        description: 'if needed, e.g. for a 4-digit version, this will be the prefix to the version calculated by the version action'
-        required: false
+      # only one version at the time
+      # for the syntax see https://github.com/actions/setup-java#supported-version-syntax
+      jdkVersion:
+        required: true
         type: string
-        default: ''
+        
+      skipTests:
+        required: false
+        type: boolean
+        default: false
+        
+      mavenDeploy:
+        required: false
+        type: boolean
+        default: true
+        
+      sonarAnalysisEnabled:
+        required: false
+        type: boolean
+        default: false
+      
+      mattermostChannel:
+        required: true
+        type: string
+      notifyMattermost:
+        required: false
+        type: boolean
+        default: true
+        
     # for more info: https://docs.github.com/en/actions/using-workflows/reusing-workflows#using-outputs-from-a-reusable-workflow
     outputs:
       releaseVersion:
