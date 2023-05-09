@@ -7,7 +7,7 @@ on:
         required: true
         type: string
 
-      releasePrefix:
+      tagPrefix:
         required: false
         type: string
         default: 'v'
@@ -39,7 +39,7 @@ jobs:
           
           sed -ri "s,<version>.*</version>,<version>${{ inputs.releaseVersion }}</version>," README.md
           sed -ri "s,version-[0-9a-z.]+-,version-${{ inputs.releaseVersion }}-," README.md
-          sed -ri "s,${{ github.repository }}/tree/[0-9a-z.]+,${{ github.repository }}/tree/${{ inputs.releasePrefix }}${{ inputs.releaseVersion }}," README.md
+          sed -ri "s,${{ github.repository }}/tree/[0-9a-z.]+,${{ github.repository }}/tree/${{ inputs.tagPrefix }}${{ inputs.releaseVersion }}," README.md
           
           git add README.md
           git commit -m "Edit README.md to contain correct version ${{ inputs.releaseVersion }}"
