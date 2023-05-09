@@ -55,7 +55,11 @@ on:
         type: boolean
         default: false
 
-      # files to be attached to the github release
+      # files to be attached to the github release - call syntax is like followed (pipe + newline for every file):
+      # releaseFiles: |
+      #   file1.txt
+      #   file2.txt
+      #   ....
       releaseFiles:
         required: false
         type: string
