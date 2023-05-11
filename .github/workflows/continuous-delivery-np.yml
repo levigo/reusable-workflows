@@ -130,7 +130,9 @@ jobs:
           java-version: ${{ inputs.jdkVersion }}
           cache: 'maven'
 
-      ## Configure maven settings
+      ###
+      ## neverpile specific step
+      ###
       - name: Prepare maven settings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -163,6 +165,10 @@ jobs:
         if: inputs.skipTests
         run: mvn $MAVEN_CLI_OPTS ${{ inputs.additionalMavenOpts }} verify -DskipTests
       ## ----------------------------------------
+
+      ###
+      ## neverpile specific step
+      ###
       - name: Deploy package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
