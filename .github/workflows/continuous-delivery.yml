@@ -53,6 +53,10 @@ on:
         required: false
         type: boolean
         default: true
+      mavenTargetRepository:
+        required: false
+        type: string
+        default: 'levigo'
         
       sonarAnalysisEnabled:
         required: false
@@ -132,6 +136,7 @@ jobs:
 
       ## Configure maven settings
       - name: Prepare maven settings
+        if: ${{ inputs.mavenTargetRepository == 'levigo' }}
         env:
           REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
           REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
@@ -143,6 +148,13 @@ jobs:
         run: |
           mkdir -p ~/.m2
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
+      - name: Prepare maven settings
+        if: ${{ inputs.mavenTargetRepository == 'neverpile' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>x-access-token</username><password>${GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml 
 
       - name: Set version
         id: version
@@ -171,8 +183,19 @@ jobs:
       ## ----------------------------------------
 
       - name: Deploy packages
-        if: inputs.mavenDeploy
+        if: ${{ inputs.mavenDeploy && inputs.mavenTargetRepository == 'levigo' }}
         run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
+      - name: Deploy package
+        if: ${{ inputs.mavenDeploy && inputs.mavenTargetRepository == 'neverpile' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_URL: ${{ secrets.REPOSITORY_URL }}
+          REPOSITORY_USERID: ${{ secrets.REPOSITORY_USERID }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.REPOSITORY_CREDENTIALS }}
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>neverpile</id><username>${REPOSITORY_USERID}</username><password>${REPOSITORY_CREDENTIALS}</password></server></servers></settings>" > ~/.m2/settings.xml 
+          mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true -DaltDeploymentRepository=neverpile::default::${REPOSITORY_URL}
 
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
