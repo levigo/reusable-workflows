@@ -16,6 +16,11 @@ on:
         required: false
         type: number
         default: 5
+
+      mainBranch:
+        required: false
+        type: string
+        default: 'master'
 jobs:
   updateReadmeMd:
     runs-on: ubuntu-22.04
@@ -34,7 +39,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git checkout master
+          git checkout ${{ inputs.mainBranch }}
           git reset --hard HEAD      
           
           sed -ri "s,<version>.*</version>,<version>${{ inputs.releaseVersion }}</version>," README.md
@@ -48,5 +53,5 @@ jobs:
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          branch: master
+          branch: ${{ inputs.mainBranch }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
