@@ -1,0 +1,32 @@
+name: Notify Mattermost
+
+on:
+  workflow_call:
+    inputs:
+      mattermostChannel:
+        required: true
+        type: string
+      fields:
+        required: false
+        type: string
+        default: 'repo,message,commit,author,action,eventName,ref,workflow'
+      text:
+        required: false
+        type: string
+        default: ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Notify Mattermost
+        uses: 8398a7/action-slack@v3
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: ${{ inputs.fields }}
+          text: ${{ inputs.text }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
