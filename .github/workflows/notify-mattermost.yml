@@ -13,7 +13,7 @@ on:
       text:
         required: false
         type: string
-        default: ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        default: '${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
 jobs:
   build:
@@ -29,4 +29,6 @@ jobs:
           status: ${{ job.status }}
           fields: ${{ inputs.fields }}
           text: ${{ inputs.text }}
+        env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
