@@ -14,6 +14,10 @@ on:
         required: false
         type: string
         default: '${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+      status:
+        required: false
+        type: string
+        default: ${{ job.status }}
 
 jobs:
   build:
@@ -26,7 +30,7 @@ jobs:
           username: GitHub
           icon_emoji: octocat
           channel: ${{ inputs.mattermostChannel }}
-          status: ${{ job.status }}
+          status: ${{ inputs.status }}
           fields: ${{ inputs.fields }}
           text: ${{ inputs.text }}
         env:
