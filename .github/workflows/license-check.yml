@@ -1,0 +1,88 @@
+name: License Check
+on:
+  workflow_call:
+    inputs:
+      permittedLicensesURI:
+        required: false
+        type: string
+        # TODO: set to main branch before merging
+#        default: https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/permitted-licenses.yml
+        default: https://github.com/levigo/reusable-workflows/raw/feat/INF-28_license-check/.github/workflows/license-check/permitted-licenses.yml
+      permittedLicensesLocallyAvailable:
+        description: Whether the repository already contains a ./.github/permitted-licenses.yml file 
+                     and this file should be used instead of the default one. The download step will be skipped
+                     in that case.
+        required: false
+        type: boolean
+        default: false
+      excludedGroups:
+        description: Which groups should be excluded from the license check. For more detailed information, see https://www.mojohaus.org/license-maven-plugin/add-third-party-mojo.html#excludedGroups
+                     Note that "excludeTransitiveDependencies" is set to true, so 
+                     transitive dependencies of excluded groups will be excluded, too.
+        type: string
+        required: false
+        default: .*(levigo|jadice).*
+
+jobs:
+  custom-license-checker:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+      - name: Prepare maven settings
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+        run: |
+          mkdir -p ~/.m2
+          envsubst < ./.github/settings.xml > ~/.m2/settings.xml
+      - name: Download third-party-file_template.ftl
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' -O \
+          -L https://github.com/levigo/reusable-workflows/raw/feat/INF-28_license-check/.github/workflows/license-check/third-party-file_template.ftl
+#          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/third-party-file_template.ftl
+      # TODO: set to main branch before merging
+      - name: Download permitted-licenses.yml
+        if: inputs.permittedLicensesLocallyAvailable == false
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' \
+          --output-dir ".github" -O \
+          -L ${{ inputs.permittedLicensesURI }}
+      - name: Run license-maven-plugin
+        run: |
+          mvn org.codehaus.mojo:license-maven-plugin:2.1.0:add-third-party \
+            -Dlicense.excludedGroups="${{ inputs.excludedGroups }}" \
+            -Dlicense.excludeTransitiveDependencies=true \
+            -Dlicense.excludedScopes=test,provided \
+            -Dlicense.fileTemplate=./third-party-file_template.ftl \
+            -Dlicense.thirdPartyFilename=LICENSES.yml
+      - name: Check Licenses
+        shell: python
+        run: |
+          import yaml
+          import json
+
+          PERMITTED_LICENSES_PATH = "./.github/permitted-licenses.yml"
+          INPUT_FILE_PATH = "target/generated-sources/license/LICENSES.yml"
+
+          permitted_licenses: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["permitted"]
+          licenses: dict[str, list[str]] = yaml.safe_load(open(INPUT_FILE_PATH, 'r'))
+          print("All licenses:\n", json.dumps(licenses, indent=2))
+
+          non_permitted_licenses = {key: licenses[key] for key in licenses if key not in permitted_licenses}
+          if len(non_permitted_licenses) > 0:
+            print("\033[91mSome dependencies do have non-permitted licenses:\033[0m\n", json.dumps(non_permitted_licenses, indent=2))
+            exit(1)
+          else:
+            print("\033[92mAll dependencies permitted.\033[0m")
+            exit(0)
