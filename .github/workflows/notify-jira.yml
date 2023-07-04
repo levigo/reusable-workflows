@@ -67,5 +67,5 @@ jobs:
           text: Failed to update the JIRA issue for version `${{ inputs.releaseVersion }}` of *${{ github.repository }}*
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: ${{ inputs.mattermostChannel != '' }} && ${{ failure() }}
+        if: ${{ inputs.mattermostChannel != '' && failure() }}
 
