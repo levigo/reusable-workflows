@@ -165,6 +165,6 @@ jobs:
           timezone: "Europe/Berlin"
           include-files: false
 
-  call-continuous-integration:
+  call-license-check:
     uses: ./.github/workflows/license-check.yml
     secrets: inherit
