@@ -2,13 +2,19 @@ permitted:
   - MIT
   - MIT License
   - Apache 2.0
+  - Apache License 2.0
   - Apache License, Version 2.0
+  - Apache License, version 2.0
+  - Apache-2.0
+  - asl # https://github.com/jbossas/jboss-vfs/blob/e581c452979fe62eb4c355fe0a6501bab9fed4d8/pom.xml#L41C29-L41C29
   - The Apache Software License, Version 2.0
   - Public Domain
   - Public Domain, per Creative Commons CC0
   - BSD License 3
+  - BSD 3-clause License w/nuclear disclaimer # https://github.com/jai-imageio/jai-imageio-core/blob/master/LICENSE.txt
   - BSD-2-Clause
   - New BSD
   - GNU Lesser Public License
   - Bouncy Castle Licence
   - GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1
+  - LGPL-2.1-or-later
