@@ -30,28 +30,23 @@
    key are licenses of each dependency (array of string)
    values are all dependencies using this license
 -->
-<#function licenseFormat licenses>
+<#function formatArtifact p licenses>
     <#assign result = ""/>
+    <#if p.name?index_of('Unnamed') &gt; -1>
+        <#assign result = p.artifactId/>
+    <#else>
+        <#assign result = p.name/>
+    </#if>
+    <#assign result = result + " (" + p.groupId + ":" + p.artifactId + ":" + p.version + " - " + (p.url!"no url defined") + "):"/>
     <#list licenses as license>
-        <#assign result = result + "(" +license + ")"/>
+        <#assign result = result + "\n - " + license/>
     </#list>
     <#return result>
 </#function>
-<#function artifactFormat artifacts>
-    <#assign result = ""/>
-    <#list artifacts as p>
-        <#if p.name?index_of('Unnamed') &gt; -1>
-            <#assign result = result + "\n - " + p.artifactId + " (" + p.groupId + ":" + p.artifactId + ":" + p.version + " - " + (p.url!"no url defined") + ")"/>
-        <#else>
-            <#assign result = result + "\n - " + p.name + " (" + p.groupId + ":" + p.artifactId + ":" + p.version + " - " + (p.url!"no url defined") + ")"/>
-        </#if>
-    </#list>
-    <#return result>
-</#function>
-<#if licenseMap?size != 0>
-<#list licenseMap as e>
-<#assign licenses = e.getKey()/>
-<#assign artifacts = e.getValue()/>
-${licenses}:${artifactFormat(artifacts)}
+<#if dependencyMap?size != 0>
+<#list dependencyMap as e>
+<#assign project = e.getKey()/>
+<#assign licenses = e.getValue()/>
+${formatArtifact(project,licenses)}
 </#list>
 </#if>
