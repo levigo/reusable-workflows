@@ -22,6 +22,14 @@ on:
         type: string
         required: false
         default: .*(levigo|jadice).*
+      aggregate:
+        description: Whether the project is a multi-module build
+        type: boolean
+        required: false
+        default: false
+
+env:
+  MVN_GOAL: ${{ inputs.aggregate && 'aggregate-add-third-party' || 'add-third-party' }}
 
 jobs:
   custom-license-checker:
@@ -66,7 +74,7 @@ jobs:
           -L ${{ inputs.permittedLicensesURI }}
       - name: Run license-maven-plugin
         run: |
-          mvn org.codehaus.mojo:license-maven-plugin:2.1.0:add-third-party \
+          mvn org.codehaus.mojo:license-maven-plugin:2.1.0:$MVN_GOAL \
             -Dlicense.excludedGroups="${{ inputs.excludedGroups }}" \
             -Dlicense.excludeTransitiveDependencies=true \
             -Dlicense.excludedScopes=test,provided \
