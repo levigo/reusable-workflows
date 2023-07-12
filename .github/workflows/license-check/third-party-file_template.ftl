@@ -33,13 +33,13 @@
 <#function formatArtifact p licenses>
     <#assign result = ""/>
     <#if p.name?index_of('Unnamed') &gt; -1>
-        <#assign result = p.artifactId/>
+        <#assign result = "\"" + p.artifactId/>
     <#else>
-        <#assign result = p.name/>
+        <#assign result = "\"" + p.name/>
     </#if>
-    <#assign result = result + " (" + p.groupId + ":" + p.artifactId + ":" + p.version + " - " + (p.url!"no url defined") + "):"/>
+    <#assign result = result + " (" + p.groupId + ":" + p.artifactId + ":" + p.version + " - " + (p.url!"no url defined") + ")\":"/>
     <#list licenses as license>
-        <#assign result = result + "\n - " + license/>
+        <#assign result = result + "\n - \"" + license + "\""/>
     </#list>
     <#return result>
 </#function>
