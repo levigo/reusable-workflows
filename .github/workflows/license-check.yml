@@ -82,3 +82,9 @@ jobs:
             -Dlicense.thirdPartyFilename=LICENSES.yml
       - name: Check Licenses
         run: python license-check.py
+      - name: Upload License Check Result
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: license-check-result.yml
+          path: license-check-result.yml

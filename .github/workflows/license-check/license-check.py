@@ -1,7 +1,6 @@
 from typing import Optional
 
 import yaml
-import json
 
 PERMITTED_LICENSES_PATH = "./.github/permitted-licenses.yml"
 INPUT_FILE_PATH = "target/generated-sources/license/LICENSES.yml"
@@ -44,13 +43,21 @@ def warning_multiple_licenses(a: str):
                                "is permitted, everything is fine but this should be checked manually!\n"
 
 
+def artifacts_to_yaml(artifacts: dict[str, list[str]], indent: int = 0) -> str:
+    result: str = ""
+    for artifact, licenses in artifacts.items():
+        result += " " * 2 * indent + artifact + ":\n"
+        for l in licenses:
+            result += " " * 2 * indent + " - " + l + "\n"
+    return result
+
+
 permitted_licenses: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["permitted"]
 warning_licenses: WarningLicenses = load_warning_licenses()
 artifacts: dict[str, list[str]] = yaml.safe_load(open(INPUT_FILE_PATH, 'r'))
-print("All licenses:\n", json.dumps(artifacts, indent=2))
-print("\n\n")
+print("All artifacts and their licenses:\n\n" + artifacts_to_yaml(artifacts) + "\n\n")
 
-non_permitted_licenses: dict[str] = {}
+restricted_artifacts: dict[str, list[str]] = {}
 warning_str: str = ""
 
 
@@ -62,14 +69,14 @@ def check_license(l: str, artifact: str) -> bool:
     if warning_license is None:
         return False
 
-    warning_str += artifact + ": " + warning_license.warning + "\n"
+    warning_str += " - " + artifact + ": " + warning_license.warning + "\n"
     return True
 
 
 for artifact, licenses in artifacts.items():
     if len(licenses) == 1:
         if not check_license(licenses[0], artifact):
-            non_permitted_licenses[artifact] = licenses
+            restricted_artifacts[artifact] = licenses
     else:
         all_valid: bool = True
         one_valid: bool = False
@@ -80,16 +87,24 @@ for artifact, licenses in artifacts.items():
                 one_valid = True
         if not all_valid:
             if one_valid:
-                warning_str += warning_multiple_licenses(artifact)
+                warning_str += " - " + warning_multiple_licenses(artifact)
             else:
-                non_permitted_licenses[artifact] = licenses
+                restricted_artifacts[artifact] = licenses
 
-if len(warning_str) > 0:
-    print("\033[93mWarnings:\n" + warning_str + "\033[0m\n")
-if len(non_permitted_licenses) > 0:
-    print("\033[91mSome dependencies do have non-permitted licenses:\033[0m\n",
-          json.dumps(non_permitted_licenses, indent=2))
-    exit(1)
-else:
-    print("\033[92mAll dependencies permitted.\033[0m")
-    exit(0)
+# report results
+with open("license-check-result.yml", "w") as result_file:
+    result_file.write("all-artifacts:\n" + artifacts_to_yaml(artifacts, indent=1))
+    result_file.write("\n\n")
+    if len(warning_str) > 0:
+        print("\033[93mWarnings:\n" + warning_str + "\033[0m\n")
+        result_file.write("\nwarnings:\n" + warning_str)
+    if len(restricted_artifacts) > 0:
+        print("\033[91mSome dependencies do have non-permitted licenses:\033[0m\n\n" +
+              artifacts_to_yaml(restricted_artifacts))
+        result_file.write("\nresult:\n - invalid\n\n")
+        result_file.write("restricted-artifacts:\n" + artifacts_to_yaml(restricted_artifacts, indent=1))
+        exit(1)
+    else:
+        print("\033[92mAll dependencies permitted.\033[0m")
+        result_file.write("\nresult:\n - valid\n")
+        exit(0)
