@@ -21,7 +21,7 @@ on:
                      transitive dependencies of excluded groups will be excluded, too.
         type: string
         required: false
-        default: .*(levigo|jadice).*
+        default: .*(levigo|jadice|neverpile).*
       aggregate:
         description: Whether the project is a multi-module build
         type: boolean
