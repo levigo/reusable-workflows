@@ -54,14 +54,12 @@ jobs:
         run: |
           mkdir -p ~/.m2
           envsubst < ./.github/settings.xml > ~/.m2/settings.xml
-      - name: Log github var
-        shell: bash
-        run: |
-          echo 'github: ${{toJSON(github)}}'
       - name: Download third-party-file_template.ftl
         run: |
           curl -H 'Accept: application/vnd.github.v4.raw' -O \
-          -L https://github.com/levigo/reusable-workflows/raw/${{ github.job_workflow_sha }}/.github/workflows/license-check/third-party-file_template.ftl
+          -L https://github.com/levigo/reusable-workflows/raw/feat/INF-28_license-check/.github/workflows/license-check/third-party-file_template.ftl
+#          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/third-party-file_template.ftl
+      # TODO: set to main branch before merging
       - name: Download license-check.py
         run: |
           curl -H 'Accept: application/vnd.github.v4.raw' -O \
