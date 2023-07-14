@@ -212,3 +212,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: inputs.notifyMattermost && always()
+
+  call-license-check:
+    uses: ./.github/workflows/license-check.yml
+    secrets: inherit
