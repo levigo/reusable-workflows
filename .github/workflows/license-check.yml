@@ -28,14 +28,14 @@ on:
         type: string
         required: false
         default: .*(levigo|jadice|neverpile).*
-      aggregate:
-        description: Whether the project is a multi-module build
-        type: boolean
+      multiModule:
+        description: Whether the project is a multi-module build. Determines whether the aggregate maven goal will be used.
         required: false
+        type: boolean
         default: false
 
 env:
-  MVN_GOAL: ${{ inputs.aggregate && 'aggregate-add-third-party' || 'add-third-party' }}
+  MVN_GOAL: ${{ inputs.multiModule && 'aggregate-add-third-party' || 'add-third-party' }}
 
 jobs:
   custom-license-checker:

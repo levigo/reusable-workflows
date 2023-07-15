@@ -76,6 +76,11 @@ on:
         required: false
         type: boolean
         default: true
+      multiModule:
+        description: Whether the project is a multi-module build. Determines whether the aggregate maven goal will be used.
+        required: false
+        type: boolean
+        default: false
         
     # for more info: https://docs.github.com/en/actions/using-workflows/reusing-workflows#using-outputs-from-a-reusable-workflow
     outputs:
@@ -216,3 +221,5 @@ jobs:
   call-license-check:
     uses: ./.github/workflows/license-check.yml
     secrets: inherit
+    with:
+      multiModule: ${{ inputs.multiModule }}
