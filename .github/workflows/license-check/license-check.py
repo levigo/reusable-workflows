@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, Type, TypeVar
 
 import yaml
 
 PERMITTED_LICENSES_PATH = "./.github/permitted-licenses.yml"
+ADDITIONAL_LICENSES_PATH = "./.github/additional-licenses.yml"
 INPUT_FILE_PATH = "target/generated-sources/license/LICENSES.yml"
 
 
@@ -11,8 +12,16 @@ class WarningLicense:
         self.name = name
         self.warning = warning
 
+    def __eq__(self, other):
+        if isinstance(other, WarningLicense):
+            return self.name == other.name
+        return False
 
-class WarningLicenses(list[WarningLicense]):
+    def __hash__(self):
+        return hash(tuple(sorted(self.__dict__.items())))
+
+
+class WarningLicenses(set[WarningLicense]):
     def __init__(self):
         super().__init__()
 
@@ -29,12 +38,27 @@ class WarningLicenses(list[WarningLicense]):
         return None
 
 
-def load_warning_licenses() -> WarningLicenses:
-    dicts: list[dict[str, str]] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["permitted-with-warning"]
+def load_warning_licenses(file_path: str) -> WarningLicenses:
+    dicts: list[dict[str, str]] = load_property_list(file_path, "permitted-with-warning", dict[str, str])
     result: WarningLicenses = WarningLicenses()
     for warning_license in dicts:
-        result.append(WarningLicense(warning_license.get("name"), warning_license.get("warning")))
+        result.add(WarningLicense(warning_license.get("name"), warning_license.get("warning")))
     return result
+
+
+T = TypeVar('T')
+
+
+def load_property_list(file_path: str, property_name: str, return_type: Type[T]) -> list[T]:
+    try:
+        property_list: list = yaml.safe_load(open(file_path, 'r'))[property_name]
+        if property_list is not None:
+            return property_list
+    except IOError:
+        print('Could not load file "{0}".'.format(file_path))
+    except KeyError:
+        print('Could not load property "{0}" file "{1}".'.format(property_name, file_path))
+    return list()
 
 
 def warning_multiple_licenses(a: str):
@@ -63,13 +87,16 @@ def check_license(l: str, artifact: str) -> bool:
     return True
 
 
-permitted_licenses: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["permitted"]
-warning_licenses: WarningLicenses = load_warning_licenses()
-ignored_artifacts: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["ignored-artifacts"]
+# read config & maven results
+permitted_licenses: set[str] = set(load_property_list(PERMITTED_LICENSES_PATH, "permitted", str))
+permitted_licenses.update(load_property_list(ADDITIONAL_LICENSES_PATH, "permitted", str))
+warning_licenses: WarningLicenses = load_warning_licenses(PERMITTED_LICENSES_PATH)
+warning_licenses.update(load_warning_licenses(ADDITIONAL_LICENSES_PATH))
+ignored_artifacts: set[str] = set(load_property_list(PERMITTED_LICENSES_PATH, "ignored-artifacts", str))
+ignored_artifacts.update(load_property_list(ADDITIONAL_LICENSES_PATH, "ignored-artifacts", str))
+
 artifacts: dict[str, list[str]] = yaml.safe_load(open(INPUT_FILE_PATH, 'r'))
 print("All artifacts and their licenses:\n\n" + artifacts_to_yaml(artifacts) + "\n\n")
-
-length_ignored = ignored_artifacts is None
 
 # remove ignored artifacts first to avoid warnings for them
 if ignored_artifacts is not None:
@@ -77,6 +104,7 @@ if ignored_artifacts is not None:
         for ignored_artifact in ignored_artifacts:
             artifacts = {k: v for k, v in artifacts.items() if ignored_artifact not in k}
 
+# find restricted artifacts
 restricted_artifacts: dict[str, list[str]] = {}
 warning_str: str = ""
 for artifact, licenses in artifacts.items():

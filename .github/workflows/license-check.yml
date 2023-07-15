@@ -3,6 +3,7 @@ on:
   workflow_call:
     inputs:
       permittedLicensesURI:
+        description: Location of permitted-licenses.yml file.
         required: false
         type: string
         # TODO: set to main branch before merging
@@ -15,6 +16,11 @@ on:
         required: false
         type: boolean
         default: false
+      additionalLicensesURI:
+        description: Location of additional-licenses.yml file, which is optional.
+        required: false
+        type: string
+        default: ''
       excludedGroups:
         description: Which groups should be excluded from the license check. For more detailed information, see https://www.mojohaus.org/license-maven-plugin/add-third-party-mojo.html#excludedGroups
                      Note that "excludeTransitiveDependencies" is set to true, so 
@@ -72,6 +78,12 @@ jobs:
           curl -H 'Accept: application/vnd.github.v4.raw' \
           --output-dir ".github" -O \
           -L ${{ inputs.permittedLicensesURI }}
+      - name: Download additional-licenses.yml
+        if: inputs.additionalLicensesURI != ''
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' \
+          --output-dir ".github" -O \
+          -L ${{ inputs.additionalLicensesURI }}
       - name: Run license-maven-plugin
         run: |
           mvn org.codehaus.mojo:license-maven-plugin:2.1.0:$MVN_GOAL \
