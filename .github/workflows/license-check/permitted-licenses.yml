@@ -3,12 +3,15 @@ permitted:
   - MIT
   - MIT License
   - The MIT License
+  - "SPDX-License-Identifier: MIT"
+  - MIT-0 # MIT, but no attribution required: https://github.com/aws/mit-0
   - Apache 2.0
   - Apache License
   - Apache License 2.0
   - Apache License, 2.0
   - Apache License, Version 2.0
   - Apache License, version 2.0
+  - Apache License Version 2.0
   - Apache-2.0
   - Apache 2
   - ASF 2.0 # cglib-nodep (cglib:cglib-nodep:3.3.0 - https://github.com/cglib/cglib/cglib-nodep)
@@ -24,6 +27,7 @@ permitted:
   - BSD 3-Clause License
   - EDL 1.0 # Jakarta Activation (com.sun.activation:jakarta.activation:2.0.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation), similar to BSD-3 clause: https://www.eclipse.org/org/documents/edl-v10.php
   - Eclipse Distribution License - v 1.0
+  - Eclipse Distribution License v. 1.0
   - Eclipse Distribution License
   - EDL
   - BSD-2-Clause
@@ -47,6 +51,12 @@ permitted-with-warning:
     warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: GNU Lesser General Public License (LGPL)
     warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
+  - name: GNU Library General Public License v2.1 or later
+    warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
+  - name: LGPL 2.1
+    warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
+  - name: LGPL-2.1
+    warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: GPL2 w/ CPE
     warning: GPL with Classpath Exception includes a weak copyleft that requires the GPL library to be exchangeable.
   - name: The GNU General Public License (GPL), Version 2, With Classpath Exception
@@ -62,6 +72,8 @@ permitted-with-warning:
   - name: Mozilla Public License 2.0 (MPL-2.0)
     warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: Mozilla Public License, Version 2.0
+    warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
+  - name: MPL 2.0
     warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: Common Development and Distribution License # https://opensource.stackexchange.com/a/8267
     warning: CDDL includes a weak copyleft that requires the CDDL library to be exchangeable.
@@ -79,6 +91,8 @@ permitted-with-warning:
   - name: BSD License
     warning: "BSD License does not specify exactly which clauses apply. Worst case this could be BSD 4 clause with the following warning: All advertising materials mentioning features or use of this software must display the following acknowledgement: This product includes software developed by the <copyright holder>."
   - name: BSD
+    warning: "BSD License does not specify exactly which clauses apply. Worst case this could be BSD 4 clause with the following warning: All advertising materials mentioning features or use of this software must display the following acknowledgement: This product includes software developed by the <copyright holder>."
+  - name: The BSD License
     warning: "BSD License does not specify exactly which clauses apply. Worst case this could be BSD 4 clause with the following warning: All advertising materials mentioning features or use of this software must display the following acknowledgement: This product includes software developed by the <copyright holder>."
   - name: Indiana University Extreme! Lab Software License # https://x-stream.github.io/mxparser/licenses.html
     warning: "Similar to BSD-4 clause: All advertising materials mentioning features or use of this software must display the following acknowledgement: This product includes software developed by the <copyright holder>."

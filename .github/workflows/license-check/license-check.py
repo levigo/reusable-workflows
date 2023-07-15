@@ -137,6 +137,7 @@ with open("license-check-result.yml", "w") as result_file:
               artifacts_to_yaml(restricted_artifacts))
         result_file.write("\nresult:\n - invalid\n\n")
         result_file.write("restricted-artifacts:\n" + artifacts_to_yaml(restricted_artifacts, indent=1))
+        print("If you think some restricted license(s) should be permitted, add them to: https://github.com/levigo/reusable-workflows/blob/main/.github/workflows/license-check/permitted-licenses.yml")
         exit(1)
     else:
         print("\033[92mAll dependencies permitted.\033[0m")
