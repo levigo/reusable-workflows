@@ -52,15 +52,6 @@ def artifacts_to_yaml(artifacts: dict[str, list[str]], indent: int = 0) -> str:
     return result
 
 
-permitted_licenses: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["permitted"]
-warning_licenses: WarningLicenses = load_warning_licenses()
-artifacts: dict[str, list[str]] = yaml.safe_load(open(INPUT_FILE_PATH, 'r'))
-print("All artifacts and their licenses:\n\n" + artifacts_to_yaml(artifacts) + "\n\n")
-
-restricted_artifacts: dict[str, list[str]] = {}
-warning_str: str = ""
-
-
 def check_license(l: str, artifact: str) -> bool:
     global warning_str
     if l in permitted_licenses:
@@ -68,11 +59,26 @@ def check_license(l: str, artifact: str) -> bool:
     warning_license = warning_licenses[l]
     if warning_license is None:
         return False
-
     warning_str += " - " + artifact + ": " + warning_license.warning + "\n"
     return True
 
 
+permitted_licenses: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["permitted"]
+warning_licenses: WarningLicenses = load_warning_licenses()
+ignored_artifacts: list[str] = yaml.safe_load(open(PERMITTED_LICENSES_PATH, 'r'))["ignored-artifacts"]
+artifacts: dict[str, list[str]] = yaml.safe_load(open(INPUT_FILE_PATH, 'r'))
+print("All artifacts and their licenses:\n\n" + artifacts_to_yaml(artifacts) + "\n\n")
+
+length_ignored = ignored_artifacts is None
+
+# remove ignored artifacts first to avoid warnings for them
+if ignored_artifacts is not None:
+    if len(ignored_artifacts) > 0:
+        for ignored_artifact in ignored_artifacts:
+            artifacts = {k: v for k, v in artifacts.items() if ignored_artifact not in k}
+
+restricted_artifacts: dict[str, list[str]] = {}
+warning_str: str = ""
 for artifact, licenses in artifacts.items():
     if len(licenses) == 1:
         if not check_license(licenses[0], artifact):
