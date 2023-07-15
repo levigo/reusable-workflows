@@ -61,6 +61,8 @@ permitted-with-warning:
     warning: GPL with Classpath Exception includes a weak copyleft that requires the GPL library to be exchangeable.
   - name: The GNU General Public License (GPL), Version 2, With Classpath Exception
     warning: GPL with Classpath Exception includes a weak copyleft that requires the GPL library to be exchangeable.
+  - name: GNU General Public License, version 2 with the GNU Classpath Exception
+    warning: GPL with Classpath Exception includes a weak copyleft that requires the GPL library to be exchangeable.
   - name: Mozilla Public License
     warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: MPL
