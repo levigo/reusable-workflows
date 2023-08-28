@@ -1,4 +1,5 @@
 name: License Check
+# Documentation of this workflow: https://levigo.de/info/pages/viewpage.action?pageId=220529226
 on:
   workflow_call:
     inputs:
@@ -6,9 +7,7 @@ on:
         description: Location of permitted-licenses.yml file.
         required: false
         type: string
-        # TODO: set to main branch before merging
-#        default: https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/permitted-licenses.yml
-        default: https://github.com/levigo/reusable-workflows/raw/feat/INF-28_license-check/.github/workflows/license-check/permitted-licenses.yml
+        default: https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/permitted-licenses.yml
       permittedLicensesLocallyAvailable:
         description: Whether the repository already contains a ./.github/permitted-licenses.yml file 
                      and this file should be used instead of the default one. The download step will be skipped
@@ -69,15 +68,11 @@ jobs:
       - name: Download third-party-file_template.ftl
         run: |
           curl -H 'Accept: application/vnd.github.v4.raw' -O \
-          -L https://github.com/levigo/reusable-workflows/raw/feat/INF-28_license-check/.github/workflows/license-check/third-party-file_template.ftl
-#          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/third-party-file_template.ftl
-      # TODO: set to main branch before merging
+          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/third-party-file_template.ftl
       - name: Download license-check.py
         run: |
           curl -H 'Accept: application/vnd.github.v4.raw' -O \
-          -L https://github.com/levigo/reusable-workflows/raw/feat/INF-28_license-check/.github/workflows/license-check/license-check.py
-#          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/license-check.py
-      # TODO: set to main branch before merging
+          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/license-check.py
       - name: Download permitted-licenses.yml
         if: inputs.permittedLicensesLocallyAvailable == false
         run: |
