@@ -164,3 +164,7 @@ jobs:
           card-layout-exit: complete
           timezone: "Europe/Berlin"
           include-files: false
+
+  call-license-check:
+    uses: ./.github/workflows/license-check.yml
+    secrets: inherit

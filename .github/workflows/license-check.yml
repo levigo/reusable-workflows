@@ -1,0 +1,103 @@
+name: License Check
+# Documentation of this workflow: https://levigo.de/info/pages/viewpage.action?pageId=220529226
+on:
+  workflow_call:
+    inputs:
+      permittedLicensesURI:
+        description: Location of permitted-licenses.yml file.
+        required: false
+        type: string
+        default: https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/permitted-licenses.yml
+      permittedLicensesLocallyAvailable:
+        description: Whether the repository already contains a ./.github/permitted-licenses.yml file 
+                     and this file should be used instead of the default one. The download step will be skipped
+                     in that case.
+        required: false
+        type: boolean
+        default: false
+      additionalLicensesURI:
+        description: Location of additional-licenses.yml file, which is optional.
+        required: false
+        type: string
+        default: ''
+      excludedGroups:
+        description: Which groups should be excluded from the license check. For more detailed information, see https://www.mojohaus.org/license-maven-plugin/add-third-party-mojo.html#excludedGroups
+                     Note that "excludeTransitiveDependencies" is set to true, so 
+                     transitive dependencies of excluded groups will be excluded, too.
+        type: string
+        required: false
+        default: .*(levigo|jadice|neverpile).*
+      multiModule:
+        description: Whether the project is a multi-module build. Determines whether the aggregate maven goal will be used.
+        required: false
+        type: boolean
+        default: false
+
+env:
+  MVN_GOAL: ${{ inputs.multiModule && 'aggregate-add-third-party' || 'add-third-party' }}
+
+jobs:
+  custom-license-checker:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+      - name: Check .github/settings.xml file existence
+        id: check_file
+        uses: andstor/file-existence-action@v2
+        with:
+          files: '.github/settings.xml'
+      - name: Prepare maven settings
+        if: steps.check_file.outputs.files_exists == 'true'
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+        run: |
+          mkdir -p ~/.m2
+          envsubst < ./.github/settings.xml > ~/.m2/settings.xml
+      - name: Download third-party-file_template.ftl
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' -O \
+          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/third-party-file_template.ftl
+      - name: Download license-check.py
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' -O \
+          -L https://github.com/levigo/reusable-workflows/raw/main/.github/workflows/license-check/license-check.py
+      - name: Download permitted-licenses.yml
+        if: inputs.permittedLicensesLocallyAvailable == false
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' \
+          --output-dir ".github" -O \
+          -L ${{ inputs.permittedLicensesURI }}
+      - name: Download additional-licenses.yml
+        if: inputs.additionalLicensesURI != ''
+        run: |
+          curl -H 'Accept: application/vnd.github.v4.raw' \
+          --output-dir ".github" -O \
+          -L ${{ inputs.additionalLicensesURI }}
+      - name: Run license-maven-plugin
+        run: |
+          mvn org.codehaus.mojo:license-maven-plugin:2.1.0:$MVN_GOAL \
+            -Dlicense.excludedGroups="${{ inputs.excludedGroups }}" \
+            -Dlicense.excludeTransitiveDependencies=true \
+            -Dlicense.excludedScopes=test,provided \
+            -Dlicense.fileTemplate=./third-party-file_template.ftl \
+            -Dlicense.thirdPartyFilename=LICENSES.yml
+      - name: Check Licenses
+        run: python license-check.py
+      - name: Upload License Check Result
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: license-check-result.yml
+          path: license-check-result.yml
