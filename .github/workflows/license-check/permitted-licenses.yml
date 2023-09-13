@@ -2,12 +2,15 @@
 permitted:
   - MIT
   - MIT License
+  - MIT license
   - The MIT License
+  - The MIT License (MIT)
   - "SPDX-License-Identifier: MIT"
   - MIT-0 # MIT, but no attribution required: https://github.com/aws/mit-0
   - Apache 2.0
   - Apache License
   - Apache License 2.0
+  - Apache License v2.0
   - Apache License, 2.0
   - Apache License, Version 2.0
   - Apache License, version 2.0
@@ -21,9 +24,11 @@ permitted:
   - The Apache Software License, Version 2.0
   - Public Domain
   - Public Domain, per Creative Commons CC0
+  - CC0
   - BSD License 3
   - BSD 3-clause License w/nuclear disclaimer # https://github.com/jai-imageio/jai-imageio-core/blob/master/LICENSE.txt
   - BSD-3-Clause
+  - BSD 3-clause
   - BSD 3-Clause License
   - EDL 1.0 # Jakarta Activation (com.sun.activation:jakarta.activation:2.0.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation), similar to BSD-3 clause: https://www.eclipse.org/org/documents/edl-v10.php
   - Eclipse Distribution License - v 1.0
@@ -33,6 +38,7 @@ permitted:
   - BSD-2-Clause
   - The BSD 2-Clause License
   - New BSD
+  - BSD New license
   - Bouncy Castle Licence
   - UnRar License # https://github.com/junrar/junrar/blob/master/LICENSE
 
@@ -56,6 +62,8 @@ permitted-with-warning:
   - name: LGPL 2.1
     warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: LGPL-2.1
+    warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
+  - name: LGPL, version 2.1
     warning: LGPL includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: GPL2 w/ CPE
     warning: GPL with Classpath Exception includes a weak copyleft that requires the GPL library to be exchangeable.
