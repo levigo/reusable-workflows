@@ -1,0 +1,115 @@
+name: Scan Repo
+
+on:
+  workflow_call:
+    inputs:
+      timeoutMinutes:
+        required: false
+        type: number
+        default: 5
+      mattermostChannel:
+        required: false
+        type: string
+        default: 'cve-scans'
+      notifyMattermost:
+        required: false
+        type: boolean
+        default: true
+      jdkVersion:
+        description: 'The JDK version to use. (defaults to "11")'
+        required: false
+        type: string
+        default: '11'
+      javaDistribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        type: string
+        default: 'temurin'
+      trivySeverities:
+        description: 'Fail if any CVE of these severity levels are found (defaults to "MEDIUM,CRITICAL,HIGH"; also available: "UNKNOWN,LOW")'
+        required: false
+        type: string
+        default: 'MEDIUM,CRITICAL,HIGH'
+      trivyVulnerabilityTypes:
+        description: 'Check for these vulnerability type (defaults to "os,library")'
+        required: false
+        type: string
+        default: 'os,library'
+      trivyFormat:
+        description: 'Output format of the trivy scan (defaults to "table"; also available: "json, sarif, github")'
+        required: false
+        type: string
+        default: 'table'
+
+permissions:
+  contents: write
+
+env:
+  # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
+  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+  # when running from the command line.
+  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+
+jobs:
+  scan:
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ inputs.timeoutMinutes}}
+    env:
+      REPO_NAME: ${{ github.repository }}
+      SBOM_FILE: 'target/bom.json'
+      TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ inputs.javaDistribution }}
+          java-version: ${{ inputs.jdkVersion }}
+          cache: 'maven'
+
+      - name: create SBOM with cyclonedx-maven-plugin
+        id: create-sbom
+        run: |
+          mvn ${{ env.MAVEN_CLI_OPTS }} org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom -DoutputFormat=json
+
+      - name: Scan sbom
+        uses: aquasecurity/trivy-action@master
+        id: scan-sbom
+        with:
+          scan-type: 'sbom'
+          image-ref: ${{ env.SBOM_FILE }}
+          exit-code: '1'
+          ignore-unfixed: false
+          severity: ${{ inputs.trivySeverities }}
+          vuln-type: ${{ inputs.trivyVulnerabilityTypes }}
+          format: ${{ inputs.trivyFormat }}
+          output: ${{ env.TRIVY_RESULT_FILE }}
+
+      - name: Upload files as run artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: scan-results
+          retention-days: 20
+          path: |
+            ${{ env.SBOM_FILE }}
+            ${{ env.TRIVY_RESULT_FILE }}
+          if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
+
+      - name: Notify Developers
+        uses: 8398a7/action-slack@v3
+        if: inputs.notifyMattermost && failure()
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo
+          text: Scanned repo "${{ env.REPO_NAME }}" - Scan results attached at run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
