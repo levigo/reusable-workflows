@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-git tag -d latest ;
-git push --delete origin latest ;
-git tag latest ;
-git push origin latest ;
+tag_name=latest
+
+git tag -d $tag_name ;
+git push --delete origin $tag_name ;
+git tag $tag_name ;
+git push origin $tag_name ;
