@@ -26,10 +26,10 @@ on:
         type: string
         default: 'temurin'
       trivySeverities:
-        description: 'Fail if any CVE of these severity levels are found (defaults to "MEDIUM,CRITICAL,HIGH"; also available: "UNKNOWN,LOW")'
+        description: 'Fail if any CVE of these severity levels are found (defaults to "CRITICAL,HIGH"; also available: "UNKNOWN,LOW,MEDIUM")'
         required: false
         type: string
-        default: 'MEDIUM,CRITICAL,HIGH'
+        default: 'CRITICAL,HIGH'
       trivyVulnerabilityTypes:
         description: 'Check for these vulnerability type (defaults to "os,library")'
         required: false
