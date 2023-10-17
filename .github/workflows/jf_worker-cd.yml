@@ -167,3 +167,7 @@ jobs:
   call-license-check:
     uses: ./.github/workflows/license-check.yml
     secrets: inherit
+
+  call-github-pages:
+    uses: ./.github/workflows/github-pages.yml
+    secrets: inherit
