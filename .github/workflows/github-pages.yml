@@ -1,9 +1,7 @@
 name: Github Pages
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call: {}
 
 jobs:
   github-pages:
