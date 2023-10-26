@@ -7,6 +7,10 @@ on:
         required: false
         type: number
         default: 5
+      branch:
+        required: false
+        type: string
+        default: '${{ github.event.repository.default_branch }}'
       mattermostChannel:
         required: false
         type: string
@@ -63,7 +67,10 @@ jobs:
       TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout branch ${{ inputs.branch }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Set up JDK
         uses: actions/setup-java@v3
