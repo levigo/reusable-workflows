@@ -27,6 +27,10 @@ on:
         required: false
         type: boolean
         default: false
+      publishGitHubPages:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -169,5 +173,6 @@ jobs:
     secrets: inherit
 
   call-github-pages:
+    if: inputs.publishGitHubPages
     uses: ./.github/workflows/github-pages.yml
     secrets: inherit

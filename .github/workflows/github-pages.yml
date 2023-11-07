@@ -1,12 +1,7 @@
 name: Github Pages
 
 on:
-  workflow_call:
-    inputs:
-      publishGitHubPages:
-        required: false
-        type: boolean
-        default: false
+  workflow_call: {}
 
 jobs:
   github-pages:
@@ -16,13 +11,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Create required folder structure
-        if: inputs.publishGitHubPages
         run: |
           mkdir ./${{ github.repository }}
           mv ./README.md ${{ github.repository }}
 
       - name: Deploy
-        if: inputs.publishGitHubPages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
