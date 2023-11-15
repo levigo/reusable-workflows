@@ -106,7 +106,7 @@ jobs:
             -DenableDocker \
             -Ddocker.registry.from=${REGISTRY_URL} \
             -Djib-maven-plugin.goal=dockerBuild
-          echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
+          echo "CONTAINER_IMAGE=$(jq -r .image ${{ inputs.jibImageJson }})" >> $GITHUB_ENV
 
       ## 4. Maven Build + Image Build without running Tests
       - name: Perform build
