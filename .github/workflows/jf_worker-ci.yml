@@ -37,6 +37,10 @@ on:
         required: false
         type: boolean
         default: true
+      jibImageJson:
+        required: false
+        type: string
+        default: 'target/jib-image.json'
 
 jobs:
   build:
@@ -115,7 +119,7 @@ jobs:
             -DenableDocker \
             -Ddocker.registry.from=${REGISTRY_URL} \
             -Djib-maven-plugin.goal=dockerBuild
-          echo "CONTAINER_IMAGE=$(jq -r .image target/jib-image.json)" >> $GITHUB_ENV
+          echo "CONTAINER_IMAGE=$(jq -r .image ${{ inputs.jibImageJson }})" >> $GITHUB_ENV
 
 
       ## run in case 2. and 3.
