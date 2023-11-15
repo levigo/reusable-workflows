@@ -3,6 +3,16 @@ name: Continuous Integration
 on:
   workflow_call:
     inputs:
+      # expected value is a JSON String. Example: '{"jdk": [11,17]}'
+      matrix:
+        required: false
+        type: string
+        default: '{"jdk": [11]}'
+      javaDistribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        type: string
+        default: 'temurin'
       sonarAnalysisEnabled:
         required: false
         type: boolean
@@ -41,14 +51,18 @@ jobs:
       # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
       MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
 
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(inputs.matrix) }}
+
     steps:
       - uses: actions/checkout@v3
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          distribution: ${{ inputs.javaDistribution }}
+          java-version: ${{ matrix.jdk }}
           cache: 'maven'
 
       - name: Prepare maven settings
@@ -168,3 +182,5 @@ jobs:
   call-license-check:
     uses: ./.github/workflows/license-check.yml
     secrets: inherit
+    with:
+      multiModule: ${{ inputs.multiModule }}

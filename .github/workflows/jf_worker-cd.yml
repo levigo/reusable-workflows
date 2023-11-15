@@ -7,6 +7,17 @@ on:
         required: false
         type: string
         default: '${{ github.event.repository.default_branch }}'
+      javaDistribution:
+        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
+        required: false
+        type: string
+        default: 'temurin'
+      # only one version at the time
+      # for the syntax see https://github.com/actions/setup-java#supported-version-syntax
+      jdkVersion:
+        required: false
+        type: string
+        default: '11'
       skipTests:
         required: false
         type: boolean
@@ -64,8 +75,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          distribution: ${{ inputs.javaDistribution }}
+          java-version: ${{ inputs.jdkVersion }}
           cache: 'maven'
 
       ## Configure maven settings
