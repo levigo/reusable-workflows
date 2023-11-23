@@ -113,6 +113,11 @@ jobs:
           format: ${{ inputs.trivyFormat }}
           output: ${{ env.TRIVY_RESULT_FILE }}
 
+      - name: print SBOM scan result
+        if: always()
+        run: |
+          cat ${{ env.TRIVY_RESULT_FILE }} || true    
+
       - name: Upload files as run artifacts
         uses: actions/upload-artifact@v3
         if: always()
