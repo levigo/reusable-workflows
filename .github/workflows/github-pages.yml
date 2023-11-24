@@ -1,0 +1,24 @@
+name: Github Pages
+
+on:
+  workflow_call: {}
+
+jobs:
+  github-pages:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create required folder structure
+        run: |
+          mkdir ./${{ github.repository }}
+          mv ./README.md ${{ github.repository }}
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./${{ github.repository }}
+          enable_jekyll: true
