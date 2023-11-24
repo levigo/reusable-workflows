@@ -6,19 +6,21 @@ on:
 jobs:
   github-pages:
     runs-on: ubuntu-22.04
+    env:
+      REPO_NAME: ${{ github.event.repository.name }}
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Create required folder structure
         run: |
-          mkdir ./${{ github.repository }}
-          mv ./README.md ${{ github.repository }}
+          mkdir ./${REPO_NAME}
+          mv ./README.md ./${REPO_NAME}/
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./${{ github.repository }}
+          publish_dir: ./${{ env.REPO_NAME }}
           enable_jekyll: true
