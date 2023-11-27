@@ -87,7 +87,7 @@ jobs:
           -L ${{ inputs.additionalLicensesURI }}
       - name: Run license-maven-plugin
         run: |
-          mvn org.codehaus.mojo:license-maven-plugin:2.1.0:$MVN_GOAL \
+          mvn org.codehaus.mojo:license-maven-plugin:2.3.0:$MVN_GOAL \
             -Dlicense.excludedGroups="${{ inputs.excludedGroups }}" \
             -Dlicense.excludeTransitiveDependencies=true \
             -Dlicense.excludedScopes=test,provided \

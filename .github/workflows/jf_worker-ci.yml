@@ -41,6 +41,11 @@ on:
         required: false
         type: string
         default: 'target/jib-image.json'
+      multiModule:
+        description: Whether the project is a multi-module build. Determines whether the aggregate maven goal will be used.
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:

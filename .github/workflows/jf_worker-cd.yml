@@ -42,6 +42,11 @@ on:
         required: false
         type: boolean
         default: false
+      multiModule:
+        description: Whether the project is a multi-module build. Determines whether the aggregate maven goal will be used.
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -182,6 +187,8 @@ jobs:
   call-license-check:
     uses: ./.github/workflows/license-check.yml
     secrets: inherit
+    with:
+      multiModule: ${{ inputs.multiModule }}
 
   call-github-pages:
     if: inputs.publishGitHubPages
