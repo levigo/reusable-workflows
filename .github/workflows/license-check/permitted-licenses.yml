@@ -103,3 +103,5 @@ permitted-with-warning:
 # should not be accepted in general but in one case it should. These artifacts should be ignored
 # and therefore added to the following list.
 ignored-artifacts:
+  - serializer #Apache License, Version 2.0
+  - xalan #Apache License, Version 2.0
