@@ -129,6 +129,17 @@ jobs:
             ${{ env.TRIVY_RESULT_FILE }}
           if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
 
+      - name: Dependency Track
+        uses: DependencyTrack/gh-upload-sbom@v3.0.0
+        if: always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ github.event.repository.name }}
+          projectversion: ${{ github.ref_name }}
+          bomfilename: ${{ env.SBOM_FILE }}
+          autocreate: true
+
       - name: Notify Developers
         uses: 8398a7/action-slack@v3
         if: inputs.notifyMattermost && failure()
