@@ -130,7 +130,7 @@ jobs:
           if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
 
       - name: Dependency Track
-        uses: DependencyTrack/gh-upload-sbom@v3.0.0
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
         if: always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
