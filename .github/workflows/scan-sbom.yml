@@ -48,6 +48,36 @@ on:
         required: false
         type: string
         default: 'table'
+      dtUpload:
+        description: 'Upload SBOM to DependencyTrack'
+        required: false
+        type: boolean
+        default: false
+      dtProjectName:
+        description: 'DependencyTrack project name (defaults to repository name)'
+        required: false
+        type: string
+        default: '${{ github.event.repository.name }}'
+      dtProjectVersion:
+        description: 'DependencyTrack project version (defaults to branch name)'
+        required: false
+        type: string
+        default: '${{ github.ref_name }}'
+      dtSetParent:
+        description: 'Whether to set a parent project. If enabled "dtProjectVersion" should be specified, too.'
+        required: false
+        type: boolean
+        default: false
+      dtParentName:
+        description: 'DependencyTrack parent name (defaults to repository name)'
+        required: false
+        type: string
+        default: '${{ github.event.repository.name }}'
+      dtParentVersion:
+        description: 'DependencyTrack parent version (defaults to default branch name)'
+        required: false
+        type: string
+        default: '${{ github.event.repository.default_branch }}'
 
 permissions:
   contents: write
@@ -129,14 +159,27 @@ jobs:
             ${{ env.TRIVY_RESULT_FILE }}
           if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
 
-      - name: Dependency Track
+      - name: Dependency Track SBOM Upload
         uses: DependencyTrack/gh-upload-sbom@v2.1.0
-        if: always()
+        if: inputs.dtUpload && always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
           apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
-          projectname: ${{ github.event.repository.name }}
-          projectversion: ${{ github.ref_name }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          bomfilename: ${{ env.SBOM_FILE }}
+          autocreate: true
+
+      - name: Dependency Track SBOM Upload (with parent)
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          parentName: ${{ inputs.dtParentName }}
+          parentVersion: ${{ inputs.dtParentVersion }}
           bomfilename: ${{ env.SBOM_FILE }}
           autocreate: true
 
