@@ -17,7 +17,7 @@ on:
       jdkVersion:
         required: false
         type: string
-        default: '11'
+        default: '17'
       skipTests:
         required: false
         type: boolean

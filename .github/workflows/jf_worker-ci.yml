@@ -7,7 +7,7 @@ on:
       matrix:
         required: false
         type: string
-        default: '{"jdk": [11]}'
+        default: '{"jdk": [17]}'
       javaDistribution:
         description: 'The Java distribution to use. (defaults to eclipse "temurin")'
         required: false
