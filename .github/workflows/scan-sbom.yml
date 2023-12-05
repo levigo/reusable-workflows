@@ -161,7 +161,7 @@ jobs:
 
       - name: Dependency Track SBOM Upload
         uses: DependencyTrack/gh-upload-sbom@v2.1.0
-        if: inputs.dtUpload && always()
+        if: inputs.dtUpload && !inputs.dtSetParent && always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
           apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
