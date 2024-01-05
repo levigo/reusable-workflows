@@ -12,6 +12,7 @@ permitted:
   - Apache License, Version 2.0
   - Apache License, version 2.0
   - Apache License Version 2.0
+  - Apache License version 2.0
   - Apache-2.0
   - Apache 2
   - ASF 2.0 # cglib-nodep (cglib:cglib-nodep:3.3.0 - https://github.com/cglib/cglib/cglib-nodep)
@@ -76,6 +77,8 @@ permitted-with-warning:
   - name: Mozilla Public License 2.0 (MPL-2.0)
     warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: Mozilla Public License, Version 2.0
+    warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
+  - name: Mozilla Public License Version 2.0
     warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
   - name: MPL 2.0
     warning: Mozilla Public License includes a weak copyleft that requires the LGPL library to be exchangeable.
