@@ -13,6 +13,7 @@ permitted:
   - Apache License, version 2.0
   - Apache License Version 2.0
   - Apache License version 2.0
+  - Apache Software License - Version 2.0
   - Apache-2.0
   - Apache 2
   - ASF 2.0 # cglib-nodep (cglib:cglib-nodep:3.3.0 - https://github.com/cglib/cglib/cglib-nodep)
@@ -26,6 +27,7 @@ permitted:
   - BSD 3-clause License w/nuclear disclaimer # https://github.com/jai-imageio/jai-imageio-core/blob/master/LICENSE.txt
   - BSD-3-Clause
   - BSD 3-Clause License
+  - FreeBSD License
   - EDL 1.0 # Jakarta Activation (com.sun.activation:jakarta.activation:2.0.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation), similar to BSD-3 clause: https://www.eclipse.org/org/documents/edl-v10.php
   - Eclipse Distribution License - v 1.0
   - Eclipse Distribution License v. 1.0
@@ -86,10 +88,15 @@ permitted-with-warning:
     warning: CDDL includes a weak copyleft that requires the CDDL library to be exchangeable.
   - name: CDDL
     warning: CDDL includes a weak copyleft that requires the CDDL library to be exchangeable.
+  - name: CDDL License
+    warning: CDDL includes a weak copyleft that requires the CDDL library to be exchangeable.
   - name: CDDL + GPLv2 with classpath exception
     warning: CDDL & GPLv2+CE include a weak copyleft that requires these libraries to be exchangeable.
   - name: CDDL/GPLv2+CE
     warning: CDDL & GPLv2+CE include a weak copyleft that requires these libraries to be exchangeable.
+  - name: CPL
+    warning: CPL include a weak copyleft that requires these libraries to be exchangeable.
+
   # ADVERTISING RESTRICTIONS
   - name: BSD 4 clause
     warning: "All advertising materials mentioning features or use of this software must display the following acknowledgement: This product includes software developed by the <copyright holder>."
@@ -109,6 +116,8 @@ permitted-with-warning:
   - name: Eclipse Public License v2.0
     warning: "Modification of any EPL-licensed component requires licensing under the EPL."
   - name: EPL-2.0
+    warning: "Modification of any EPL-licensed component requires licensing under the EPL."
+  - name: Eclipse Public License - Version 1.0
     warning: "Modification of any EPL-licensed component requires licensing under the EPL."
 
 # Sometimes maven won't be able to fetch any licenses for artifacts or an artifact's license
