@@ -33,6 +33,16 @@ on:
         required: false
         type: string
         default: 'temurin'
+      mavenRootDirectory:
+        description: 'The directory with the root pom.xml. (defaults to project root)'
+        required: false
+        type: string
+        default: '${{ github.workspace }}'
+      trivyContinueOnError:
+        description: 'Do not fail build if trivy scan finds vulnerabilities'
+        required: false
+        type: boolean
+        default: false
       trivySeverities:
         description: 'Fail if any CVE of these severity levels are found (defaults to "CRITICAL,HIGH"; also available: "UNKNOWN,LOW,MEDIUM")'
         required: false
@@ -102,12 +112,12 @@ jobs:
 
     steps:
       - name: Checkout branch ${{ inputs.branch }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ inputs.javaDistribution }}
           java-version: ${{ inputs.jdkVersion }}
@@ -127,11 +137,13 @@ jobs:
 
       - name: create SBOM with cyclonedx-maven-plugin
         id: create-sbom
+        working-directory: ${{ inputs.mavenRootDirectory }}
         run: |
           mvn ${{ env.MAVEN_CLI_OPTS }} org.cyclonedx:cyclonedx-maven-plugin:2.7.11:makeAggregateBom -DoutputFormat=json
 
       - name: Scan sbom
         uses: aquasecurity/trivy-action@master
+        continue-on-error: ${{ inputs.trivyContinueOnError }}
         id: scan-sbom
         with:
           scan-type: 'sbom'
@@ -149,7 +161,7 @@ jobs:
           cat ${{ env.TRIVY_RESULT_FILE }} || true    
 
       - name: Upload files as run artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ${{ inputs.resultUploadName }}
@@ -160,7 +172,7 @@ jobs:
           if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
 
       - name: Dependency Track SBOM Upload
-        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        uses: DependencyTrack/gh-upload-sbom@v3.0.0
         if: inputs.dtUpload && !inputs.dtSetParent && always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
@@ -171,7 +183,7 @@ jobs:
           autocreate: true
 
       - name: Dependency Track SBOM Upload (with parent)
-        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        uses: DependencyTrack/gh-upload-sbom@v3.0.0
         if: inputs.dtUpload && inputs.dtSetParent && always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
