@@ -128,7 +128,7 @@ jobs:
       - name: create SBOM with cyclonedx-maven-plugin
         id: create-sbom
         run: |
-          mvn ${{ env.MAVEN_CLI_OPTS }} org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputFormat=json
+          mvn ${{ env.MAVEN_CLI_OPTS }} org.cyclonedx:cyclonedx-maven-plugin:2.7.11:makeAggregateBom -DoutputFormat=json
 
       - name: Scan sbom
         uses: aquasecurity/trivy-action@master
