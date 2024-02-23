@@ -139,7 +139,7 @@ jobs:
       ## run in case 3. and 4.
       - name: Scan container image
         if: inputs.scanImage == true
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.17.0
         # workaround for timeout issue
         # - see https://github.com/aquasecurity/trivy-action/issues/190 and https://github.com/aquasecurity/trivy/issues/3421
         env:
