@@ -107,7 +107,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeoutMinutes}}
     env:
       REPO_NAME: ${{ github.repository }}
-      SBOM_FILE: 'target/bom.json'
+      SBOM_FILE: "${{ inputs.mavenRootDirectory }}target/bom.json"
       TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
 
     steps:
