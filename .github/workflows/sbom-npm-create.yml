@@ -1,0 +1,61 @@
+name: sbom-npm-create
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: false
+        type: string
+        default: '${{ github.event.repository.default_branch }}'
+      nodeVersion:
+        description: 'The Node version to use. (defaults to "18")'
+        required: false
+        type: string
+        default: '18'
+      npmRootDirectory:
+        description: 'The directory with the root package.json. (defaults to project root)'
+        required: false
+        type: string
+        default: '${{ github.workspace }}'
+    outputs:
+      sbomFile: "${{ inputs.npmRootDirectory }}target/bom.json"
+
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ inputs.timeoutMinutes}}
+    env:
+      REPO_NAME: ${{ github.repository }}
+      SBOM_FILE: "${{ inputs.npmRootDirectory }}target/bom.json"
+      TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
+
+    steps:
+      - name: Checkout branch ${{ inputs.branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: setup git credentials for npm
+        uses: de-vri-es/setup-git-credentials@v2
+        with:
+          credentials: ${{ secrets.GIT_CREDENTIALS_FOR_NPM }}
+
+      - name: Use Node.js ${{ inputs.nodeVersion }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.nodeVersion }}
+
+      - name: npm install
+        run: |
+          npm --prefix ${{ inputs.npmRootDirectory }} install
+        env:
+          CI: true
+
+      - name: Create SBOM with CycloneDX node module
+        working-directory: ${{ inputs.npmRootDirectory }}
+        run: |
+          npm install --global @cyclonedx/cyclonedx-npm && cyclonedx-npm --output-format json --output-file ${{ env.SBOM_NPM_FILE }} 

@@ -1,16 +1,11 @@
-name: Scan Repo
+name: sbom-process
 
 on:
   workflow_call:
     inputs:
-      timeoutMinutes:
-        required: false
-        type: number
-        default: 5
-      branch:
-        required: false
+      SBOMFile:
+        required: true
         type: string
-        default: '${{ github.event.repository.default_branch }}'
       resultUploadName:
         required: false
         type: string
@@ -23,21 +18,6 @@ on:
         required: false
         type: boolean
         default: true
-      jdkVersion:
-        description: 'The JDK version to use. (defaults to "11")'
-        required: false
-        type: string
-        default: '11'
-      javaDistribution:
-        description: 'The Java distribution to use. (defaults to eclipse "temurin")'
-        required: false
-        type: string
-        default: 'temurin'
-      mavenRootDirectory:
-        description: 'The directory with the root pom.xml. (defaults to project root)'
-        required: false
-        type: string
-        default: '${{ github.workspace }}'
       trivyContinueOnError:
         description: 'Do not fail build if trivy scan finds vulnerabilities'
         required: false
@@ -110,28 +90,69 @@ jobs:
       TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
 
     steps:
-      - name: sbom-maven-create
-        uses: .
+      - name: Scan sbom
+        uses: aquasecurity/trivy-action@0.17.0
+        continue-on-error: ${{ inputs.trivyContinueOnError }}
+        id: scan-sbom
         with:
-          branch: ${{ inputs.branch }}
-          jdkVersion: ${{ inputs.jdkVersion }}
-          javaDistribution: ${{ inputs.javaDistribution }}
-          mavenRootDirectory: ${{ inputs.mavenRootDirectory }}
+          scan-type: 'sbom'
+          image-ref: ${{ input.SBOMFile }}
+          exit-code: '1'
+          ignore-unfixed: false
+          severity: ${{ inputs.trivySeverities }}
+          vuln-type: ${{ inputs.trivyVulnerabilityTypes }}
+          format: ${{ inputs.trivyFormat }}
+          output: ${{ env.TRIVY_RESULT_FILE }}
 
-      - name: sbom-process
-        uses: .
+      - name: print SBOM scan result
+        if: always()
+        run: |
+          cat ${{ env.TRIVY_RESULT_FILE }} || true    
+
+      - name: Upload files as run artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          SBOMFile: ${{ steps.sbom-maven-create.outputs.sbomFile }}
-          resultUploadName: ${{ inputs.resultUploadName }}
-          mattermostChannel: ${{ inputs.mattermostChannel }}
-          notifyMattermost: ${{ inputs.notifyMattermost }}
-          trivyContinueOnError: ${{ inputs.trivyContinueOnError }}
-          trivySeverities: ${{ inputs.trivySeverities }}
-          trivyVulnerabilityTypes: ${{ inputs.trivyVulnerabilityTypes }}
-          trivyFormat: ${{ inputs.trivyFormat }}
-          dtUpload: ${{ inputs.dtUpload }}
-          dtProjectName: ${{ inputs.dtProjectName }}
-          dtProjectVersion: ${{ inputs.dtProjectVersion }}
-          dtSetParent: ${{ inputs.dtSetParent }}
-          dtParentName: ${{ inputs.dtParentName }}
-          dtParentVersion: ${{ inputs.dtParentVersion }}
+          name: ${{ inputs.resultUploadName }}
+          retention-days: 20
+          path: |
+            ${{ input.SBOMFile }}
+            ${{ env.TRIVY_RESULT_FILE }}
+          if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
+
+      - name: Dependency Track SBOM Upload
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && !inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          bomfilename: ${{ input.SBOMFile }}
+          autocreate: true
+
+      - name: Dependency Track SBOM Upload (with parent)
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          parentName: ${{ inputs.dtParentName }}
+          parentVersion: ${{ inputs.dtParentVersion }}
+          bomfilename: ${{ input.SBOMFile }}
+          autocreate: true
+
+      - name: Notify Developers
+        uses: 8398a7/action-slack@v3
+        if: inputs.notifyMattermost && failure()
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo
+          text: Scanned repo "${{ env.REPO_NAME }}" - Scan results attached at run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
