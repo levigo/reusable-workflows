@@ -107,31 +107,103 @@ jobs:
     timeout-minutes: ${{ inputs.timeoutMinutes}}
     env:
       REPO_NAME: ${{ github.repository }}
+      SBOM_FILE: "${{ inputs.mavenRootDirectory }}target/bom.json"
       TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
 
     steps:
-      - name: sbom-maven-create
-        uses: .
+      - name: Checkout branch ${{ inputs.branch }}
+        uses: actions/checkout@v4
         with:
-          branch: ${{ inputs.branch }}
-          jdkVersion: ${{ inputs.jdkVersion }}
-          javaDistribution: ${{ inputs.javaDistribution }}
-          mavenRootDirectory: ${{ inputs.mavenRootDirectory }}
+          ref: ${{ inputs.branch }}
 
-      - name: sbom-process
-        uses: .
+      - name: Set up JDK
+        uses: actions/setup-java@v4
         with:
-          SBOMFile: ${{ steps.sbom-maven-create.outputs.sbomFile }}
-          resultUploadName: ${{ inputs.resultUploadName }}
-          mattermostChannel: ${{ inputs.mattermostChannel }}
-          notifyMattermost: ${{ inputs.notifyMattermost }}
-          trivyContinueOnError: ${{ inputs.trivyContinueOnError }}
-          trivySeverities: ${{ inputs.trivySeverities }}
-          trivyVulnerabilityTypes: ${{ inputs.trivyVulnerabilityTypes }}
-          trivyFormat: ${{ inputs.trivyFormat }}
-          dtUpload: ${{ inputs.dtUpload }}
-          dtProjectName: ${{ inputs.dtProjectName }}
-          dtProjectVersion: ${{ inputs.dtProjectVersion }}
-          dtSetParent: ${{ inputs.dtSetParent }}
-          dtParentName: ${{ inputs.dtParentName }}
-          dtParentVersion: ${{ inputs.dtParentVersion }}
+          distribution: ${{ inputs.javaDistribution }}
+          java-version: ${{ inputs.jdkVersion }}
+          cache: 'maven'
+
+      - name: Prepare maven settings
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+        run: |
+          mkdir -p ~/.m2
+          envsubst < ./.github/settings.xml > ~/.m2/settings.xml
+
+      - name: create SBOM with cyclonedx-maven-plugin
+        id: create-sbom
+        working-directory: ${{ inputs.mavenRootDirectory }}
+        run: |
+          mvn ${{ env.MAVEN_CLI_OPTS }} org.cyclonedx:cyclonedx-maven-plugin:2.7.11:makeAggregateBom -DoutputFormat=json
+
+      - name: Scan sbom
+        uses: aquasecurity/trivy-action@0.17.0
+        continue-on-error: ${{ inputs.trivyContinueOnError }}
+        id: scan-sbom
+        with:
+          scan-type: 'sbom'
+          image-ref: ${{ env.SBOM_FILE }}
+          exit-code: '1'
+          ignore-unfixed: false
+          severity: ${{ inputs.trivySeverities }}
+          vuln-type: ${{ inputs.trivyVulnerabilityTypes }}
+          format: ${{ inputs.trivyFormat }}
+          output: ${{ env.TRIVY_RESULT_FILE }}
+
+      - name: print SBOM scan result
+        if: always()
+        run: |
+          cat ${{ env.TRIVY_RESULT_FILE }} || true    
+
+      - name: Upload files as run artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ inputs.resultUploadName }}
+          retention-days: 20
+          path: |
+            ${{ env.SBOM_FILE }}
+            ${{ env.TRIVY_RESULT_FILE }}
+          if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
+
+      - name: Dependency Track SBOM Upload
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && !inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          bomfilename: ${{ env.SBOM_FILE }}
+          autocreate: true
+
+      - name: Dependency Track SBOM Upload (with parent)
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          parentName: ${{ inputs.dtParentName }}
+          parentVersion: ${{ inputs.dtParentVersion }}
+          bomfilename: ${{ env.SBOM_FILE }}
+          autocreate: true
+
+      - name: Notify Developers
+        uses: 8398a7/action-slack@v3
+        if: inputs.notifyMattermost && failure()
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo
+          text: Scanned repo "${{ env.REPO_NAME }}" - Scan results attached at run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -102,19 +102,99 @@ jobs:
     timeout-minutes: ${{ inputs.timeoutMinutes}}
     env:
       REPO_NAME: ${{ github.repository }}
+      SBOM_FILE: "${{ inputs.npmRootDirectory }}target/bom.json"
       TRIVY_RESULT_FILE: 'trivy-cyclonedx-sbom.txt'
 
     steps:
-      - name: sbom-npm-create
-        uses: .
+      - name: Checkout branch ${{ inputs.branch }}
+        uses: actions/checkout@v4
         with:
-          branch: ${{ inputs.branch }}
-          nodeVersion: ${{ inputs.nodeVersion }}
-          npmRootDirectory: ${{ inputs.npmRootDirectory }}
+          ref: ${{ inputs.branch }}
 
-      - name: sbom-process
-        uses: .
+      - name: setup git credentials for npm
+        uses: de-vri-es/setup-git-credentials@v2
         with:
-          branch: ${{ inputs.branch }}
-          nodeVersion: ${{ inputs.nodeVersion }}
-          npmRootDirectory: ${{ inputs.npmRootDirectory }}
+          credentials: ${{ secrets.GIT_CREDENTIALS_FOR_NPM }}
+
+      - name: Use Node.js ${{ inputs.nodeVersion }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.nodeVersion }}
+
+      - name: npm install
+        run: |
+          npm --prefix ${{ inputs.npmRootDirectory }} install
+        env:
+          CI: true
+
+      - name: Create SBOM with CycloneDX node module
+        working-directory: ${{ inputs.npmRootDirectory }}
+        run: |
+          npm install --global @cyclonedx/cyclonedx-npm && cyclonedx-npm --output-format json --output-file ${{ env.SBOM_NPM_FILE }} 
+
+      - name: Scan sbom
+        uses: aquasecurity/trivy-action@0.17.0
+        continue-on-error: ${{ inputs.trivyContinueOnError }}
+        id: scan-sbom
+        with:
+          scan-type: 'sbom'
+          image-ref: ${{ env.SBOM_FILE }}
+          exit-code: '1'
+          ignore-unfixed: false
+          severity: ${{ inputs.trivySeverities }}
+          vuln-type: ${{ inputs.trivyVulnerabilityTypes }}
+          format: ${{ inputs.trivyFormat }}
+          output: ${{ env.TRIVY_RESULT_FILE }}
+
+      - name: print SBOM scan result
+        if: always()
+        run: |
+          cat ${{ env.TRIVY_RESULT_FILE }} || true    
+
+      - name: Upload files as run artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ inputs.resultUploadName }}
+          retention-days: 20
+          path: |
+            ${{ env.SBOM_FILE }}
+            ${{ env.TRIVY_RESULT_FILE }}
+          if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
+
+      - name: Dependency Track SBOM Upload
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && !inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          bomfilename: ${{ env.SBOM_FILE }}
+          autocreate: true
+
+      - name: Dependency Track SBOM Upload (with parent)
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
+        if: inputs.dtUpload && inputs.dtSetParent && always()
+        with:
+          serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
+          apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          projectname: ${{ inputs.dtProjectName }}
+          projectversion: ${{ inputs.dtProjectVersion }}
+          parentName: ${{ inputs.dtParentName }}
+          parentVersion: ${{ inputs.dtParentVersion }}
+          bomfilename: ${{ env.SBOM_FILE }}
+          autocreate: true
+
+      - name: Notify Developers
+        uses: 8398a7/action-slack@v3
+        if: inputs.notifyMattermost && failure()
+        with:
+          username: GitHub
+          icon_emoji: octocat
+          channel: ${{ inputs.mattermostChannel }}
+          status: ${{ job.status }}
+          fields: repo
+          text: Scanned repo "${{ env.REPO_NAME }}" - Scan results attached at run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
