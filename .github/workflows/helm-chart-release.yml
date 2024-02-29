@@ -22,6 +22,14 @@ on:
         required: false
         type: string
         default: 'ci_qm_test'
+      tagPrefix:
+        required: false
+        type: string
+        default: ''
+      tagPostfix:
+        required: false
+        type: string
+        default: ''
     secrets:
       token:
         required: true
@@ -71,6 +79,8 @@ jobs:
           nameOverride: ${{ inputs.nameOverride }}
           helmChartDir: ${{ inputs.helmChartDir }}
           helmRepo: ${{ inputs.helmRepo }}
+          tagPrefix: ${{ inputs.tagPrefix }}
+          tagPostfix: ${{ inputs.tagPostfix }}
           appVersion: ${{ inputs.appVersion }}
           appVersionPrefix: ${{ secrets.appVersionPrefix }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
