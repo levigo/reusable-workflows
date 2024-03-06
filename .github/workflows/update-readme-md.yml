@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ inputs.timeoutMinutes }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # first sed: replace the maven code-snipptes, if present -> <version>0.2.7</version> will e.g. turn into <version>0.2.8</version>
       # second sed: replace the display text of the version badge

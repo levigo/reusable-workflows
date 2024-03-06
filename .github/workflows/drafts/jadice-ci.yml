@@ -91,12 +91,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Checkout actions repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: levigo/github-actions
           ref: 502aa3f9b51cb04b48be498dc7b1913d59b7b47f
