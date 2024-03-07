@@ -37,7 +37,7 @@ on:
       # only one version at the time
       # for the syntax see https://github.com/actions/setup-java#supported-version-syntax
       jdkVersion:
-        required: true
+        required: false
         type: string
         default: '17'
 
@@ -71,7 +71,7 @@ on:
         default: ''
 
       mattermostChannel:
-        required: true
+        required: false
         type: string
         default: "neverpile-ci"
       notifyMattermost:
