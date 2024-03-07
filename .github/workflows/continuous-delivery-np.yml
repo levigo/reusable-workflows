@@ -39,7 +39,8 @@ on:
       jdkVersion:
         required: true
         type: string
-        
+        default: '17'
+
       skipTests:
         required: false
         type: boolean
@@ -72,6 +73,7 @@ on:
       mattermostChannel:
         required: true
         type: string
+        default: "neverpile-ci"
       notifyMattermost:
         required: false
         type: boolean
@@ -213,16 +215,17 @@ jobs:
             
       - name: Notify Mattermost
         uses: 8398a7/action-slack@v3
+        if: inputs.notifyMattermost && failure()
         with:
           username: GitHub
           icon_emoji: octocat
           channel: ${{ inputs.mattermostChannel }}
           status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref
-          text: ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          fields: repo,message,commit,author
+          text: Released new version `${{ steps.semanticversion.outputs.new_version }}` of *${{ github.repository }}* failed!
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: inputs.notifyMattermost && always()
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
 
   call-license-check:
     uses: ./.github/workflows/license-check.yml
