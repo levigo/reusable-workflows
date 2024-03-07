@@ -50,7 +50,7 @@ on:
         type: string
         default: ''
         
-      mavenDeploy:
+      publicMaven:
         required: false
         type: boolean
         default: true
@@ -140,12 +140,27 @@ jobs:
       ###
       ## neverpile specific step
       ###
-      - name: Prepare maven settings
+      - name: Prepare maven settings public
+        if: ${{ inputs.publicMaven }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>x-access-token</username><password>${GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml 
+
+      - name: Prepare maven settings custom
+        if: ${{ ! inputs.publicMaven }}
+        env:
+          REPOSITORY_URL: ${{ secrets.LEVIGO_NEXUS_REPO_ALL }}
+          REPOSITORY_USERID: ${{ secrets.LEVIGO_NEXUS_USERNAME }}
+          REPOSITORY_CREDENTIALS: ${{ secrets.LEVIGO_NEXUS_PASSWORD }}
+          REPOSITORY_RELEASE_USERID: ${{ secrets.NEXUS2_USERNAME }}
+          REPOSITORY_RELEASE_CREDENTIALS: ${{ secrets.NEXUS2_PASSWORD }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+        run: |
+          mkdir -p ~/.m2
+          envsubst < ./.github/settings.xml > ~/.m2/settings.xml
 
       - name: Set version
         id: version
@@ -176,7 +191,8 @@ jobs:
       ###
       ## neverpile specific step
       ###
-      - name: Deploy package
+      - name: Deploy package public
+        if: ${{ inputs.publicMaven }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_URL: ${{ secrets.REPOSITORY_URL }}
@@ -186,6 +202,10 @@ jobs:
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>neverpile</id><username>${REPOSITORY_USERID}</username><password>${REPOSITORY_CREDENTIALS}</password></server></servers></settings>" > ~/.m2/settings.xml 
           mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true -DaltDeploymentRepository=neverpile::default::${REPOSITORY_URL}
+
+      - name: Deploy packages custom
+        if: ${{ ! inputs.publicMaven }}
+        run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
 
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
