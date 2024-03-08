@@ -49,7 +49,11 @@ on:
         required: false
         type: string
         default: ''
-        
+
+      mavenDeploy:
+        required: false
+        type: boolean
+        default: true
       publicMaven:
         required: false
         type: boolean
@@ -192,7 +196,7 @@ jobs:
       ## neverpile specific step
       ###
       - name: Deploy package public
-        if: ${{ inputs.publicMaven }}
+        if: ${{ inputs.publicMaven && inputs.mavenDeploy }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_URL: ${{ secrets.REPOSITORY_URL }}
@@ -204,7 +208,7 @@ jobs:
           mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true -DaltDeploymentRepository=neverpile::default::${REPOSITORY_URL}
 
       - name: Deploy packages custom
-        if: ${{ ! inputs.publicMaven }}
+        if: ${{ ! inputs.publicMaven && inputs.mavenDeploy }}
         run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
 
       - name: Perform sonar analysis
