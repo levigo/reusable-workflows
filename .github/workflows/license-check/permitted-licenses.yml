@@ -38,6 +38,9 @@ permitted:
   - New BSD
   - Bouncy Castle Licence
   - UnRar License # https://github.com/junrar/junrar/blob/master/LICENSE
+  - The W3C Software License # https://www.w3.org/Consortium/Legal/copyright-software-19980720
+  - Unicode/ICU License # https://www.unicode.org/copyright.html#License
+  - GWT Terms # https://www.gwtproject.org/terms.html
 
 # The following licenses will be accepted but cause restrictions which is why certain warnings will be printed
 permitted-with-warning:
@@ -127,3 +130,5 @@ ignored-artifacts:
   - serializer #Apache License, Version 2.0
   - xalan #Apache License, Version 2.0
   - jace #p8-client:jace
+  - colt # CERN and LGPL https://dst.lbl.gov/ACSSoftware/colt/license.html
+  - tapestry # Apache 2.0
