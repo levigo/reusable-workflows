@@ -53,6 +53,10 @@ on:
         required: false
         type: boolean
         default: true
+      dockerDeploy:
+        required: false
+        type: boolean
+        default: false
         
       sonarAnalysisEnabled:
         required: false
@@ -178,6 +182,19 @@ jobs:
       - name: Deploy packages
         if: inputs.mavenDeploy
         run: mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip.exec=true -Dmaven.install.skip=true
+
+      - name: Deploy images
+        if: inputs.dockerDeploy
+        env:
+          REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
+        run: >
+          mvn $MAVEN_CLI_OPTS package
+          -Dmaven.test.skip=true -Dmaven.install.skip=true
+          -Dgit.commit.id=${{ github.sha }}
+          -DenableDocker
+          -Ddocker.registry.from=${REGISTRY_URL}
+          -Ddocker.registry.to=${REGISTRY_URL}
+          -Ddocker.image.registry=${REGISTRY_URL}
 
       - name: Perform sonar analysis
         if: inputs.sonarAnalysisEnabled
