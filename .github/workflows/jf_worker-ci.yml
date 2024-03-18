@@ -108,6 +108,7 @@ jobs:
         run: |
           mvn $MAVEN_CLI_OPTS verify \
             -Dmaven.test.failure.ignore=true \
+            -DexcludedGroups=testcontainers \
             -DenableDocker \
             -Ddocker.registry.from=${REGISTRY_URL} \
             -Djib-maven-plugin.goal=dockerBuild
@@ -120,12 +121,17 @@ jobs:
           REGISTRY_URL: ${{ secrets.LEVIGO_NEXUS_REGISTRY_RELEASES }}
         run: |
           mvn $MAVEN_CLI_OPTS verify \
-            -Dmaven.test.failure.ignore=true \
+            -DskipTests \
             -DenableDocker \
             -Ddocker.registry.from=${REGISTRY_URL} \
             -Djib-maven-plugin.goal=dockerBuild
           echo "CONTAINER_IMAGE=$(jq -r .image ${{ inputs.jibImageJson }})" >> $GITHUB_ENV
 
+      ## Run Integration Tests against worker container
+      - name: Run integration tests
+        env:
+          WORKER_IMAGE: ${{ env.CONTAINER_IMAGE }}
+        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true -Dgroups=testcontainers
 
       ## run in case 2. and 3.
       - name: Publish Test Report
