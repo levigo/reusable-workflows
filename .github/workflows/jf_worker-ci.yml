@@ -129,6 +129,7 @@ jobs:
 
       ## Run Integration Tests against worker container
       - name: Run integration tests
+        if: vars.TESTCONTAINERS_ENABLED == 'true'
         env:
           WORKER_IMAGE: ${{ env.CONTAINER_IMAGE }}
         run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true -Dgroups=testcontainers
