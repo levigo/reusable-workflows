@@ -137,11 +137,11 @@ jobs:
       ## run in case 2. and 3.
       - name: Publish Test Report
         if: inputs.skipTests == false
-        uses: scacap/action-surefire-report@v1
+        uses: mikepenz/action-junit-report@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_test_failures: true
-          fail_if_no_tests: true
+          fail_on_failure: true
+          require_tests: true
+          report_paths: "**/target/surefire-reports/TEST-*.xml"
 
       ## run in case 3. and 4.
       - name: Scan container image
