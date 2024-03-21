@@ -132,12 +132,16 @@ jobs:
         if: vars.TESTCONTAINERS_ENABLED == 'true'
         env:
           WORKER_IMAGE: ${{ env.CONTAINER_IMAGE }}
-        run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true -Dgroups=testcontainers
+        run: |
+          mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true -Dgroups=testcontainers
+          ls -lahn target/surefire-reports/
 
       ## run in case 2. and 3.
       - name: Publish Test Report
         if: inputs.skipTests == false
-        uses: scacap/action-surefire-report@v1.7.3
+        uses: scacap/action-surefire-report@v1
+        env:
+          NODE_OPTIONS: '--max_old_space_size=4096'
         with:
           fail_on_test_failures: true
           fail_if_no_tests: true
