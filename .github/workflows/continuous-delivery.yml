@@ -203,7 +203,7 @@ jobs:
           mvn $MAVEN_CLI_OPTS sonar:sonar -Dsonar.scm.disabled=true -Dsonar.qualitygate.wait=true -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html
 
       - name: create release and upload release asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.semanticversion.outputs.new_tag }}
           name: ${{ steps.semanticversion.outputs.new_version }}
