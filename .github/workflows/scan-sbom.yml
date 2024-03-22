@@ -172,7 +172,7 @@ jobs:
           if-no-files-found: warn # 'error' or 'ignore' are also available, defaults to `warn`
 
       - name: Dependency Track SBOM Upload
-        uses: DependencyTrack/gh-upload-sbom@v3
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
         if: inputs.dtUpload && !inputs.dtSetParent && always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
@@ -183,7 +183,7 @@ jobs:
           autocreate: true
 
       - name: Dependency Track SBOM Upload (with parent)
-        uses: DependencyTrack/gh-upload-sbom@v3
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
         if: inputs.dtUpload && inputs.dtSetParent && always()
         with:
           serverhostname: ${{ secrets.DEPENDENCYTRACK_HOSTNAME }}
