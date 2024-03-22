@@ -50,7 +50,7 @@ jobs:
           cache: 'maven'
       - name: Check .github/settings.xml file existence
         id: check_file
-        uses: andstor/file-existence-action@v2
+        uses: andstor/file-existence-action@v3
         with:
           files: '.github/settings.xml'
       - name: Prepare maven settings

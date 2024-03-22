@@ -48,6 +48,12 @@ on:
         type: boolean
         default: false
 
+    # for more info: https://docs.github.com/en/actions/using-workflows/reusing-workflows#using-outputs-from-a-reusable-workflow
+    outputs:
+      releaseVersion:
+        description: "increased version, according to semver"
+        value: ${{ jobs.build.outputs.releaseVersion }}
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -60,13 +66,15 @@ jobs:
       # when running from the command line.
       # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
       MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+    outputs:
+      releaseVersion: ${{ steps.semanticversion.outputs.new_version }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Bump version and create tag
         id: semanticversion
-        uses: mathieudutour/github-tag-action@v6.1
+        uses: mathieudutour/github-tag-action@v6.2
         with:
           release_branches: ${{ inputs.release_branches }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
