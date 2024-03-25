@@ -118,7 +118,7 @@ jobs:
           credentials: ${{ secrets.GIT_CREDENTIALS_FOR_NPM }}
 
       - name: Use Node.js ${{ inputs.nodeVersion }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4.0.2
         with:
           node-version: ${{ inputs.nodeVersion }}
       - name: npm install
@@ -132,7 +132,7 @@ jobs:
           npm install --global @cyclonedx/cyclonedx-npm && cyclonedx-npm ${{ inputs.npmRootDirectory }}package.json --output-format json --output-file ${{ env.SBOM_FILE }} 
 
       - name: Scan sbom
-        uses: aquasecurity/trivy-action@0.17.0
+        uses: aquasecurity/trivy-action@0.18.0
         continue-on-error: ${{ inputs.trivyContinueOnError }}
         id: scan-sbom
         with:
@@ -151,7 +151,7 @@ jobs:
           cat ${{ env.TRIVY_RESULT_FILE }} || true    
 
       - name: Upload files as run artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         if: always()
         with:
           name: ${{ inputs.resultUploadName }}
