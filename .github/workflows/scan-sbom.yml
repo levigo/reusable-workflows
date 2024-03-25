@@ -142,7 +142,7 @@ jobs:
           mvn ${{ env.MAVEN_CLI_OPTS }} org.cyclonedx:cyclonedx-maven-plugin:2.7.11:makeAggregateBom -DoutputFormat=json
 
       - name: Scan sbom
-        uses: aquasecurity/trivy-action@0.17.0
+        uses: aquasecurity/trivy-action@0.18.0
         continue-on-error: ${{ inputs.trivyContinueOnError }}
         id: scan-sbom
         with:
@@ -161,7 +161,7 @@ jobs:
           cat ${{ env.TRIVY_RESULT_FILE }} || true    
 
       - name: Upload files as run artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         if: always()
         with:
           name: ${{ inputs.resultUploadName }}
@@ -196,7 +196,7 @@ jobs:
           autocreate: true
 
       - name: Notify Developers
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.16.2
         if: inputs.notifyMattermost && failure()
         with:
           username: GitHub

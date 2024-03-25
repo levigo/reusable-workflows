@@ -167,7 +167,7 @@ jobs:
             -d '{"event_type":"release_created","client_payload":{"version":"${{ steps.semanticversion.outputs.new_version }}"}}'
 
       - name: Notify Developers
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.16.2
         if: inputs.notifyMattermost && always()
         with:
           username: GitHub
