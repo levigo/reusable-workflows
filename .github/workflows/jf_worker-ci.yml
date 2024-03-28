@@ -132,6 +132,7 @@ jobs:
         if: vars.TESTCONTAINERS_ENABLED == 'true'
         env:
           WORKER_IMAGE: ${{ env.CONTAINER_IMAGE }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
         run: mvn $MAVEN_CLI_OPTS verify -Dmaven.test.failure.ignore=true -Dgroups=testcontainers
 
       ## run in case 2. and 3.
