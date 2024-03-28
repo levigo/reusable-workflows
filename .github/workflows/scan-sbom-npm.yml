@@ -104,6 +104,10 @@ on:
         required: false
         type: boolean
         default: false
+      jrProjectKey:
+        description: 'Your project in jira name'
+        required: false
+        type: string
 
 
 permissions:
@@ -231,8 +235,48 @@ jobs:
           echo "SPRINT_ID=$SPRINT_ID" >> $GITHUB_ENV
           echo "SPRINT_ID is $SPRINT_ID"
 
-      - name: Create Jira Ticket
+      - name: Check for existing Jira issue
         if: inputs.createTicketJira && failure()
+        id: check_jira_issue
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_CLOUD_CVE_TOKEN }}
+        run: |
+          ISSUE_KEY=$(curl -s -X GET -u ${{ inputs.jrUser }}:$JIRA_API_TOKEN ${{ inputs.jrBaseUrl }}/rest/api/3/search?jql=project=${{ inputs.jrProjectKey }}+AND+summary~"CVE bug" | jq -r '.issues[0].key // empty')
+          echo "::set-output name=issue_key::${ISSUE_KEY}"
+
+      - name: Update or Create Jira Ticket
+        if: inputs.createTicketJira && failure() && steps.check_jira_issue.outputs.issue_key != ''
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_CLOUD_CVE_TOKEN }}
+          SPRINT_ID: ${{ env.SPRINT_ID }}
+        run: |
+          SBOM_SCAN_RESULT=$(cat ${{ env.TRIVY_RESULT_FILE }})
+          # Update existing Jira issue
+          curl -X PUT -H "Content-Type: application/json" -u ${{ inputs.jrUser }}:$JIRA_API_TOKEN ${{ inputs.jrBaseUrl }}/rest/api/3/issue/${{ steps.check_jira_issue.outputs.issue_key }} \
+          --data '{
+            "fields": {
+              "summary": "CVE vulnerability",
+              "description": {
+                "type": "doc",
+                "version": 1,
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "text": "SBOM Scan Result:\n\n${SBOM_SCAN_RESULT}",
+                        "type": "text"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "${{ inputs.jrCustomFiled }}": '${SPRINT_ID}'
+            }
+          }'
+
+      - name: Create Jira Ticket
+        if: inputs.createTicketJira && failure() && steps.check_jira_issue.outputs.issue_key == ''
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_CLOUD_CVE_TOKEN }}
           SPRINT_ID: ${{ env.SPRINT_ID }}
